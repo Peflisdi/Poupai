@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light mode colors */
+    --bg-primary: 255 255 255;
+    --bg-secondary: 245 245 245;
+    --bg-tertiary: 236 236 236;
+    --bg-card: 255 255 255;
+    --bg-hover: 248 248 248;
+
+    --text-primary: 0 0 0;
+    --text-secondary: 102 102 102;
+    --text-tertiary: 153 153 153;
+
+    --border-primary: 224 224 224;
+    --border-subtle: 240 240 240;
+
+    --accent: 0 0 0;
+  }
+
+  .dark {
+    /* Dark mode colors */
+    --bg-primary: 0 0 0;
+    --bg-secondary: 10 10 10;
+    --bg-tertiary: 26 26 26;
+    --bg-card: 10 10 10;
+    --bg-hover: 26 26 26;
+
+    --text-primary: 255 255 255;
+    --text-secondary: 160 160 160;
+    --text-tertiary: 112 112 112;
+
+    --border-primary: 42 42 42;
+    --border-subtle: 26 26 26;
+
+    --accent: 255 255 255;
+  }
+
+  * {
+    border-color: rgb(var(--border-primary));
+  }
+
+  body {
+    @apply bg-white dark:bg-black text-black dark:text-white;
+  }
+}
+
+@layer utilities {
+  .bg-primary {
+    background-color: rgb(var(--bg-primary));
+  }
+
+  .bg-secondary {
+    background-color: rgb(var(--bg-secondary));
+  }
+
+  .bg-tertiary {
+    background-color: rgb(var(--bg-tertiary));
+  }
+
+  .bg-card {
+    background-color: rgb(var(--bg-card));
+  }
+
+  .bg-hover {
+    background-color: rgb(var(--bg-hover));
+  }
+
+  .text-primary {
+    color: rgb(var(--text-primary));
+  }
+
+  .text-secondary {
+    color: rgb(var(--text-secondary));
+  }
+
+  .text-tertiary {
+    color: rgb(var(--text-tertiary));
+  }
+
+  .border-primary {
+    border-color: rgb(var(--border-primary));
+  }
+
+  .border-subtle {
+    border-color: rgb(var(--border-subtle));
+  }
+
+  .accent {
+    color: rgb(var(--accent));
+  }
+
+  .smooth-transition {
+    @apply transition-all duration-smooth;
+  }
+}
