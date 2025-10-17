@@ -35,3 +35,23 @@ next-env.d.ts
 
 # Prisma
 prisma/migrations
+
+# Documentation with sensitive info (exclude from repository)
+ARCHITECTURE.md
+COMPONENTS_TODO.md
+DATABASE_SETUP.md
+DELIVERY.md
+DESIGN_SHOWCASE.md
+DEVELOPMENT.md
+INSTALLATION.md
+MVP_DASHBOARD_SUMMARY.md
+PROJECT_COMPLETE.md
+PROJECT_SUMMARY.md
+QUICKSTART.md
+START_HERE.md
+TREE.md
+TREE_STRUCTURE.txt
+
+# Scripts with potential sensitive data
+scripts/
+
