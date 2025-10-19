@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { name, icon, color, parentId } = body;
+    const { name, icon, color, budget, parentId } = body;
 
     if (!name) {
       return NextResponse.json({ error: "Name is required" }, { status: 400 });
@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
         name,
         icon: icon || "📁",
         color: color || "#6B7280",
+        budget: budget ? parseFloat(budget) : null,
         parentId: parentId || null,
       },
     });
@@ -97,7 +98,7 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { id, name, icon, color, parentId } = body;
+    const { id, name, icon, color, budget, parentId } = body;
 
     if (!id) {
       return NextResponse.json({ error: "Category ID is required" }, { status: 400 });
@@ -122,6 +123,7 @@ export async function PUT(request: NextRequest) {
         name,
         icon: icon || existingCategory.icon,
         color: color || existingCategory.color,
+        budget: budget !== undefined ? (budget ? parseFloat(budget) : null) : existingCategory.budget,
         parentId: parentId !== undefined ? parentId : existingCategory.parentId,
       },
     });

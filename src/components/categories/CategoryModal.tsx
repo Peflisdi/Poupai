@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/Input";
 import { Category } from "@/types";
 import { showToast, toastMessages } from "@/lib/toast";
 import { categoryValidations, ValidationError } from "@/lib/validations";
+import { formatCurrency, parseCurrency } from "@/lib/currency";
 
 interface CategoryModalProps {
   isOpen: boolean;
@@ -90,7 +91,7 @@ export function CategoryModal({
       name: formData.name.trim(),
       icon: formData.icon,
       color: formData.color,
-      budget: formData.budget ? parseFloat(formData.budget) : undefined,
+      budget: formData.budget ? parseCurrency(formData.budget) : undefined,
     });
 
     if (!validation.isValid) {
@@ -105,7 +106,7 @@ export function CategoryModal({
         name: formData.name.trim(),
         icon: formData.icon,
         color: formData.color,
-        budget: formData.budget ? parseFloat(formData.budget) : undefined,
+        budget: formData.budget ? parseCurrency(formData.budget) : undefined,
         parentId: formData.parentId || undefined,
       };
 
@@ -234,15 +235,31 @@ export function CategoryModal({
             <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
               Orçamento Mensal (Opcional)
             </label>
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              value={formData.budget}
-              onChange={(e) => setFormData({ ...formData, budget: e.target.value })}
-              placeholder="R$ 0,00"
-              className={hasError("Orçamento") ? "border-red-500 dark:border-red-500" : ""}
-            />
+            <div className="relative">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 dark:text-neutral-400">
+                R$
+              </span>
+              <Input
+                type="text"
+                value={formData.budget}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  // Remove tudo exceto números, vírgula e ponto
+                  const cleaned = value.replace(/[^\d,.]/g, "");
+                  setFormData({ ...formData, budget: cleaned });
+                }}
+                onBlur={(e) => {
+                  // Formata ao sair do campo
+                  const value = e.target.value;
+                  if (value) {
+                    const number = parseCurrency(value);
+                    setFormData({ ...formData, budget: number.toFixed(2).replace(".", ",") });
+                  }
+                }}
+                placeholder="0,00"
+                className={`pl-10 ${hasError("Orçamento") ? "border-red-500 dark:border-red-500" : ""}`}
+              />
+            </div>
             {hasError("Orçamento") ? (
               <p className="text-xs text-red-500 mt-1">{getErrorMessage("Orçamento")}</p>
             ) : (
@@ -294,7 +311,7 @@ export function CategoryModal({
                 </p>
                 {formData.budget && (
                   <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                    Orçamento: R$ {parseFloat(formData.budget).toFixed(2)}
+                    Orçamento: {formatCurrency(parseCurrency(formData.budget))}
                   </p>
                 )}
               </div>
