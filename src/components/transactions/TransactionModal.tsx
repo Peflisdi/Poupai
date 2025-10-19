@@ -36,6 +36,8 @@ export function TransactionModal({
     categoryId: "",
     paymentMethod: "PIX",
     cardId: "",
+    paidBy: "",
+    isReimbursed: false,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [isInstallment, setIsInstallment] = useState(false);
@@ -53,6 +55,8 @@ export function TransactionModal({
         categoryId: transaction.categoryId || "",
         paymentMethod: transaction.paymentMethod,
         cardId: transaction.cardId || "",
+        paidBy: transaction.paidBy || "",
+        isReimbursed: transaction.isReimbursed || false,
       });
     } else {
       setFormData({
@@ -63,6 +67,8 @@ export function TransactionModal({
         categoryId: categories[0]?.id || "",
         paymentMethod: "PIX",
         cardId: "",
+        paidBy: "",
+        isReimbursed: false,
       });
     }
   }, [transaction, categories]);
@@ -370,6 +376,41 @@ export function TransactionModal({
                     Nenhum cartão cadastrado. Vá em &quot;Cartões&quot; para adicionar.
                   </p>
                 )}
+              </div>
+            )}
+
+            {/* Pago por (para rastrear gastos de terceiros) */}
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                Pago por (Opcional)
+              </label>
+              <Input
+                type="text"
+                value={formData.paidBy || ""}
+                onChange={(e) => setFormData({ ...formData, paidBy: e.target.value })}
+                placeholder="Ex: Maria, João, Mãe..."
+              />
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                💡 Registre quando outra pessoa pagar esta despesa
+              </p>
+            </div>
+
+            {/* Checkbox de Reembolsado (só aparece se tiver paidBy) */}
+            {formData.paidBy && formData.paidBy.trim() && (
+              <div className="flex items-center gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+                <input
+                  type="checkbox"
+                  id="isReimbursed"
+                  checked={formData.isReimbursed || false}
+                  onChange={(e) => setFormData({ ...formData, isReimbursed: e.target.checked })}
+                  className="w-4 h-4 rounded border-neutral-200 dark:border-neutral-800 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                />
+                <label
+                  htmlFor="isReimbursed"
+                  className="text-sm font-medium text-neutral-700 dark:text-neutral-300 cursor-pointer flex-1"
+                >
+                  ✅ Já reembolsei {formData.paidBy}
+                </label>
               </div>
             )}
 

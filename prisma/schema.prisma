@@ -110,6 +110,8 @@ model Transaction {
   recurringPeriod       String? // DAILY, WEEKLY, MONTHLY, YEARLY
   receiptUrl            String?
   tags                  String[] @default([])
+  paidBy                String? // Nome da pessoa que pagou (para rastrear gastos de terceiros)
+  isReimbursed          Boolean  @default(false) // Se já foi reembolsado
   userId                String
   categoryId            String?
   cardId                String?

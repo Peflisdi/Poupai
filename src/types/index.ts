@@ -42,6 +42,8 @@ export interface Transaction {
   recurringPeriod: RecurringPeriod | null;
   receiptUrl: string | null;
   tags: string[];
+  paidBy: string | null; // Nome da pessoa que pagou
+  isReimbursed: boolean; // Se já foi reembolsado
   userId: string;
   categoryId: string | null;
   cardId: string | null;
@@ -155,6 +157,8 @@ export interface TransactionFormData {
   tags?: string[];
   isRecurring?: boolean;
   recurringPeriod?: RecurringPeriod;
+  paidBy?: string; // Nome da pessoa que pagou
+  isReimbursed?: boolean; // Se já foi reembolsado
 }
 
 export interface CategoryFormData {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useMemo } from "react";
+import Link from "next/link";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useCategories } from "@/hooks/useCategories";
 import { BarChart } from "@/components/reports/BarChart";
@@ -15,6 +16,7 @@ import {
   ArrowUpCircle,
   ArrowDownCircle,
   Wallet,
+  Users,
 } from "lucide-react";
 import { StatCardSkeleton, ChartSkeleton, CardSkeleton } from "@/components/ui/Skeleton";
 
@@ -213,7 +215,17 @@ export default function ReportsPage() {
           </p>
         </div>
 
-        {/* Period Selector */}
+        <Link
+          href="/reports/by-person"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+        >
+          <Users className="h-4 w-4" />
+          Ver Gastos por Pessoa
+        </Link>
+      </div>
+
+      {/* Period Selector */}
+      <div className="flex items-center justify-center">
         <div className="flex items-center gap-2 bg-neutral-100 dark:bg-neutral-800 p-1 rounded-lg">
           <button
             onClick={() => setSelectedPeriod("6months")}

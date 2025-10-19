@@ -37,6 +37,9 @@ export function TransactionTable({ transactions, onEdit, onDelete }: Transaction
             <th className="text-left py-3 px-4 text-sm font-semibold text-text-secondary">
               Método
             </th>
+            <th className="text-left py-3 px-4 text-sm font-semibold text-text-secondary">
+              Pago por
+            </th>
             <th className="text-right py-3 px-4 text-sm font-semibold text-text-secondary">
               Valor
             </th>
@@ -99,6 +102,24 @@ export function TransactionTable({ transactions, onEdit, onDelete }: Transaction
                 <span className="text-xs px-2 py-1 bg-background-tertiary rounded-full text-text-secondary">
                   {getPaymentMethodLabel(transaction.paymentMethod)}
                 </span>
+              </td>
+
+              {/* Pago por */}
+              <td className="py-4 px-4">
+                {transaction.paidBy ? (
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs px-2 py-1 bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-400 rounded-full">
+                      👤 {transaction.paidBy}
+                    </span>
+                    {transaction.isReimbursed && (
+                      <span className="text-xs text-green-600 dark:text-green-400" title="Reembolsado">
+                        ✓
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <span className="text-xs text-text-tertiary">-</span>
+                )}
               </td>
 
               {/* Valor */}

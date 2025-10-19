@@ -107,6 +107,8 @@ export async function POST(request: NextRequest) {
       isRecurring,
       recurringPeriod,
       note,
+      paidBy,
+      isReimbursed,
     } = body;
 
     // Validate required fields
@@ -126,6 +128,8 @@ export async function POST(request: NextRequest) {
         cardId: cardId || null,
         isRecurring: isRecurring || false,
         recurringPeriod: recurringPeriod || null,
+        paidBy: paidBy || null,
+        isReimbursed: isReimbursed || false,
       },
       include: {
         category: true,
