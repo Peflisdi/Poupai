@@ -74,7 +74,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { name, nickname, limit, closingDay, dueDay, color } = body;
+    const { name, nickname, limit, closingDay, dueDay, color, isDefault } = body;
 
     // Validações
     if (!name || !limit || !closingDay || !dueDay) {
@@ -95,6 +95,19 @@ export async function POST(request: Request) {
       );
     }
 
+    // Se está marcando como padrão, desmarcar outros cartões
+    if (isDefault) {
+      await prisma.card.updateMany({
+        where: {
+          userId: user.id,
+          isDefault: true,
+        },
+        data: {
+          isDefault: false,
+        },
+      });
+    }
+
     const card = await prisma.card.create({
       data: {
         name,
@@ -103,6 +116,7 @@ export async function POST(request: Request) {
         closingDay: parseInt(closingDay),
         dueDay: parseInt(dueDay),
         color: color || "#000000",
+        isDefault: isDefault || false,
         userId: user.id,
       },
     });
@@ -133,7 +147,7 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { id, name, nickname, limit, closingDay, dueDay, color } = body;
+    const { id, name, nickname, limit, closingDay, dueDay, color, isDefault } = body;
 
     if (!id) {
       return NextResponse.json({ error: "ID do cartão obrigatório" }, { status: 400 });
@@ -148,6 +162,20 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Cartão não encontrado" }, { status: 404 });
     }
 
+    // Se está marcando como padrão, desmarcar outros cartões
+    if (isDefault && !existingCard.isDefault) {
+      await prisma.card.updateMany({
+        where: {
+          userId: user.id,
+          isDefault: true,
+          id: { not: id },
+        },
+        data: {
+          isDefault: false,
+        },
+      });
+    }
+
     const card = await prisma.card.update({
       where: { id },
       data: {
@@ -157,6 +185,7 @@ export async function PUT(request: Request) {
         closingDay: closingDay ? parseInt(closingDay) : existingCard.closingDay,
         dueDay: dueDay ? parseInt(dueDay) : existingCard.dueDay,
         color: color || existingCard.color,
+        isDefault: isDefault !== undefined ? isDefault : existingCard.isDefault,
       },
     });
 

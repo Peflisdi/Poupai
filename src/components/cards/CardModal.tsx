@@ -34,6 +34,7 @@ export function CardModal({ isOpen, onClose, onSave, card }: CardModalProps) {
     closingDay: "" as string | number,
     dueDay: "" as string | number,
     color: "#000000",
+    isDefault: false,
   });
   const [isLoading, setIsLoading] = useState(false);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
@@ -47,6 +48,7 @@ export function CardModal({ isOpen, onClose, onSave, card }: CardModalProps) {
         closingDay: card.closingDay,
         dueDay: card.dueDay,
         color: card.color,
+        isDefault: card.isDefault || false,
       });
     } else {
       setFormData({
@@ -56,6 +58,7 @@ export function CardModal({ isOpen, onClose, onSave, card }: CardModalProps) {
         closingDay: "",
         dueDay: "",
         color: "#000000",
+        isDefault: false,
       });
     }
   }, [card, isOpen]);
@@ -90,6 +93,7 @@ export function CardModal({ isOpen, onClose, onSave, card }: CardModalProps) {
         closingDay: Number(formData.closingDay),
         dueDay: Number(formData.dueDay),
         color: formData.color,
+        isDefault: formData.isDefault,
       };
 
       if (card) {
@@ -261,6 +265,25 @@ export function CardModal({ isOpen, onClose, onSave, card }: CardModalProps) {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Cartão Padrão */}
+          <div className="flex items-center gap-3 p-4 rounded-lg bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
+            <input
+              type="checkbox"
+              id="isDefault"
+              checked={formData.isDefault}
+              onChange={(e) => setFormData({ ...formData, isDefault: e.target.checked })}
+              className="w-4 h-4 text-blue-600 bg-white border-gray-300 rounded focus:ring-blue-500 focus:ring-2 cursor-pointer"
+            />
+            <label htmlFor="isDefault" className="flex-1 cursor-pointer">
+              <div className="text-sm font-medium text-neutral-900 dark:text-neutral-100">
+                Marcar como cartão padrão
+              </div>
+              <div className="text-xs text-neutral-600 dark:text-neutral-400 mt-0.5">
+                Será selecionado automaticamente em novas transações de crédito
+              </div>
+            </label>
           </div>
 
           {/* Buttons */}

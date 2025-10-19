@@ -6,6 +6,7 @@ export interface CreateCardData {
   closingDay: number;
   dueDay: number;
   color?: string;
+  isDefault?: boolean;
 }
 
 export interface UpdateCardData extends Partial<CreateCardData> {
@@ -20,6 +21,7 @@ export interface Card {
   closingDay: number;
   dueDay: number;
   color: string;
+  isDefault: boolean;
   userId: string;
   createdAt: string;
   updatedAt: string;
