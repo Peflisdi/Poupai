@@ -257,7 +257,9 @@ export function CategoryModal({
                   }
                 }}
                 placeholder="0,00"
-                className={`pl-10 ${hasError("Orçamento") ? "border-red-500 dark:border-red-500" : ""}`}
+                className={`pl-10 ${
+                  hasError("Orçamento") ? "border-red-500 dark:border-red-500" : ""
+                }`}
               />
             </div>
             {hasError("Orçamento") ? (

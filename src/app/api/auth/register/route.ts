@@ -35,25 +35,8 @@ export async function POST(req: Request) {
       },
     });
 
-    // Create default categories for the user
-    const defaultCategories = [
-      { name: "Alimentação", icon: "Utensils", color: "#000000" },
-      { name: "Transporte", icon: "Car", color: "#000000" },
-      { name: "Moradia", icon: "Home", color: "#000000" },
-      { name: "Lazer", icon: "Smile", color: "#000000" },
-      { name: "Saúde", icon: "Heart", color: "#000000" },
-      { name: "Educação", icon: "GraduationCap", color: "#000000" },
-      { name: "Vestuário", icon: "Shirt", color: "#000000" },
-      { name: "Outros", icon: "MoreHorizontal", color: "#000000" },
-    ];
-
-    await prisma.category.createMany({
-      data: defaultCategories.map((cat) => ({
-        ...cat,
-        userId: user.id,
-        isDefault: true,
-      })),
-    });
+    // Categorias não são mais criadas automaticamente
+    // O usuário deve criar suas próprias categorias personalizadas
 
     return NextResponse.json(
       {
