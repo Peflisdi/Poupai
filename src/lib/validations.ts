@@ -382,14 +382,6 @@ export const cardValidations = {
       if (dayError) errors.push(dayError);
     }
 
-    // Validação cruzada: dia de vencimento deve ser após dia de fechamento
-    if (data.closingDay && data.dueDay && data.dueDay <= data.closingDay) {
-      errors.push({
-        field: "Dia de vencimento",
-        message: "Dia de vencimento deve ser após o dia de fechamento",
-      });
-    }
-
     // Cor
     const colorError = validators.required(data.color, "Cor");
     if (colorError) errors.push(colorError);

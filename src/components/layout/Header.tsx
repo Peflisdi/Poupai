@@ -32,15 +32,16 @@ export function Header() {
   }, [showUserMenu]);
 
   return (
-    <header className="fixed left-64 right-0 top-0 z-10 h-16 border-b border-neutral-200 dark:border-neutral-800 bg-white dark:bg-neutral-950">
-      <div className="flex h-full items-center justify-between px-6">
+    <header className="fixed left-0 right-0 top-0 z-30 h-16 border-b border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-950 lg:left-64">
+      <div className="flex h-full items-center justify-between px-4 lg:px-6">
         {/* Search */}
-        <div className="flex-1 max-w-md">
+        <div className="flex-1 max-w-md ml-12 lg:ml-0">
           <button onClick={open} className="w-full text-left">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-text-tertiary" />
-              <div className="h-10 w-full rounded-lg border border-border-primary bg-background-primary pl-10 pr-20 flex items-center text-text-tertiary hover:border-border-secondary transition-colors">
-                Buscar transações...
+              <div className="h-10 w-full rounded-lg border border-border-primary bg-background-primary pl-10 pr-4 sm:pr-20 flex items-center text-text-tertiary hover:border-border-secondary transition-colors text-sm">
+                <span className="hidden sm:inline">Buscar transações...</span>
+                <span className="sm:hidden">Buscar...</span>
               </div>
               <kbd className="absolute right-3 top-1/2 -translate-y-1/2 hidden sm:inline-flex h-5 select-none items-center gap-1 rounded border border-border-primary bg-background-secondary px-1.5 font-mono text-[10px] font-medium text-text-tertiary">
                 <span className="text-xs">⌘</span>K

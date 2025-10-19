@@ -187,13 +187,13 @@ export function CategoryModal({
             <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
               Ícone
             </label>
-            <div className="grid grid-cols-8 gap-2">
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
               {CATEGORY_ICONS.map((icon) => (
                 <button
                   key={icon}
                   type="button"
                   onClick={() => setFormData({ ...formData, icon })}
-                  className={`p-3 text-2xl rounded-lg border-2 transition-all hover:scale-110 ${
+                  className={`p-3 text-2xl rounded-lg border-2 transition-all hover:scale-110 flex items-center justify-center ${
                     formData.icon === icon
                       ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
                       : "border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600"
@@ -211,7 +211,7 @@ export function CategoryModal({
               <Palette className="w-4 h-4" />
               Cor
             </label>
-            <div className="grid grid-cols-8 gap-2">
+            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
               {CATEGORY_COLORS.map((color) => (
                 <button
                   key={color}
