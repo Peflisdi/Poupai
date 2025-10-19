@@ -123,7 +123,8 @@ export async function PUT(request: NextRequest) {
         name,
         icon: icon || existingCategory.icon,
         color: color || existingCategory.color,
-        budget: budget !== undefined ? (budget ? parseFloat(budget) : null) : existingCategory.budget,
+        budget:
+          budget !== undefined ? (budget ? parseFloat(budget) : null) : existingCategory.budget,
         parentId: parentId !== undefined ? parentId : existingCategory.parentId,
       },
     });

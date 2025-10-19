@@ -5,6 +5,7 @@ import { X } from "lucide-react";
 import { Transaction, Category, TransactionFormData } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { CurrencyInput } from "@/components/ui/CurrencyInput";
 import { Select } from "@/components/ui/Select";
 import { installmentService } from "@/services/installmentService";
 import { useCards } from "@/hooks/useCards";
@@ -217,14 +218,10 @@ export function TransactionModal({
               <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
                 Valor
               </label>
-              <Input
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                placeholder="Digite o valor"
-                required
+              <CurrencyInput
+                value={formData.amount ? parseFloat(formData.amount.toString()) : 0}
+                onChange={(value) => setFormData({ ...formData, amount: value.toString() })}
+                placeholder="0,00"
                 className={hasError("Valor") ? "border-red-500 dark:border-red-500" : ""}
               />
               {hasError("Valor") && (

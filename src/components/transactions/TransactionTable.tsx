@@ -2,6 +2,7 @@
 
 import { Transaction } from "@/types";
 import { formatCurrency, formatDate } from "@/lib/utils";
+import { getPaymentMethodLabel } from "@/lib/translations";
 import { Pencil, Trash2, TrendingUp, TrendingDown } from "lucide-react";
 
 interface TransactionTableProps {
@@ -96,7 +97,7 @@ export function TransactionTable({ transactions, onEdit, onDelete }: Transaction
               {/* Método */}
               <td className="py-4 px-4">
                 <span className="text-xs px-2 py-1 bg-background-tertiary rounded-full text-text-secondary">
-                  {transaction.paymentMethod}
+                  {getPaymentMethodLabel(transaction.paymentMethod)}
                 </span>
               </td>
 
