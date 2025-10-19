@@ -41,6 +41,7 @@ export function TransactionModal({
   const [isInstallment, setIsInstallment] = useState(false);
   const [installments, setInstallments] = useState(2);
   const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
+  const [defaultPaymentMethod, setDefaultPaymentMethod] = useState<string | null>(null);
 
   useEffect(() => {
     if (transaction) {
@@ -65,6 +66,37 @@ export function TransactionModal({
       });
     }
   }, [transaction, categories]);
+
+  // Carregar método de pagamento padrão do usuário
+  useEffect(() => {
+    const loadDefaultPaymentMethod = async () => {
+      try {
+        const res = await fetch("/api/user/preferences");
+        if (res.ok) {
+          const data = await res.json();
+          setDefaultPaymentMethod(data.defaultPaymentMethod);
+        }
+      } catch (error) {
+        console.error("Erro ao carregar método padrão:", error);
+      }
+    };
+
+    loadDefaultPaymentMethod();
+  }, []);
+
+  // Auto-selecionar método de pagamento padrão quando criar nova transação
+  useEffect(() => {
+    // Só aplicar se:
+    // 1. Não é edição (não tem transaction)
+    // 2. Tem método padrão configurado
+    // 3. Modal está aberto
+    if (!transaction && defaultPaymentMethod && isOpen) {
+      setFormData((prev) => ({
+        ...prev,
+        paymentMethod: defaultPaymentMethod as TransactionFormData["paymentMethod"],
+      }));
+    }
+  }, [transaction, defaultPaymentMethod, isOpen]);
 
   // Auto-selecionar cartão padrão quando método de pagamento for CREDIT
   useEffect(() => {

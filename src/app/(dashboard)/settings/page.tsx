@@ -21,6 +21,7 @@ export default function SettingsPage() {
   // Preferências
   const [currency, setCurrency] = useState("BRL");
   const [firstDayOfMonth, setFirstDayOfMonth] = useState(1);
+  const [defaultPaymentMethod, setDefaultPaymentMethod] = useState<string>("");
 
   // Tema
   const [theme, setTheme] = useState<ThemeMode>("system");
@@ -36,6 +37,21 @@ export default function SettingsPage() {
     if (savedTheme) {
       setTheme(savedTheme);
     }
+
+    // Carregar método de pagamento padrão
+    const loadUserPreferences = async () => {
+      try {
+        const res = await fetch("/api/user/preferences");
+        if (res.ok) {
+          const data = await res.json();
+          setDefaultPaymentMethod(data.defaultPaymentMethod || "");
+        }
+      } catch (error) {
+        console.error("Erro ao carregar preferências:", error);
+      }
+    };
+
+    loadUserPreferences();
   }, []);
 
   const handleSaveProfile = async () => {
@@ -54,7 +70,19 @@ export default function SettingsPage() {
   const handleSavePreferences = async () => {
     setIsLoading(true);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Salvar método de pagamento padrão
+      const res = await fetch("/api/user/preferences", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          defaultPaymentMethod: defaultPaymentMethod || null,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Erro ao salvar preferências");
+      }
+
       showToast.success("Preferências atualizadas com sucesso!");
     } catch (error) {
       showToast.error("Erro ao atualizar preferências");
@@ -198,6 +226,26 @@ export default function SettingsPage() {
               </Select>
               <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
                 Define o início do seu ciclo mensal de gastos
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+                Método de Pagamento Padrão
+              </label>
+              <Select
+                value={defaultPaymentMethod}
+                onChange={(e) => setDefaultPaymentMethod(e.target.value)}
+              >
+                <option value="">Nenhum (Selecionar sempre)</option>
+                <option value="PIX">PIX</option>
+                <option value="CREDIT">Crédito</option>
+                <option value="DEBIT">Débito</option>
+                <option value="CASH">Dinheiro</option>
+                <option value="TRANSFER">Transferência</option>
+              </Select>
+              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                Será selecionado automaticamente ao criar novas transações
               </p>
             </div>
 
