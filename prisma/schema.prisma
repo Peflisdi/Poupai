@@ -13,17 +13,17 @@ datasource db {
 
 // ===== USER & AUTH =====
 model User {
-  id              String    @id @default(cuid())
-  name            String?
-  email           String    @unique
-  emailVerified   DateTime?
-  password        String?
-  image           String?
-  currency        String    @default("BRL")
-  firstDayOfMonth Int       @default(1)
+  id                   String    @id @default(cuid())
+  name                 String?
+  email                String    @unique
+  emailVerified        DateTime?
+  password             String?
+  image                String?
+  currency             String    @default("BRL")
+  firstDayOfMonth      Int       @default(1)
   defaultPaymentMethod String? // PIX, CASH, DEBIT, CREDIT, TRANSFER
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
 
   accounts             Account[]
   sessions             Session[]

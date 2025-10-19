@@ -66,6 +66,21 @@ export function TransactionModal({
     }
   }, [transaction, categories]);
 
+  // Auto-selecionar cartão padrão quando método de pagamento for CREDIT
+  useEffect(() => {
+    // Só auto-selecionar se:
+    // 1. Não é edição (não tem transaction)
+    // 2. Método é CREDIT
+    // 3. Não tem cartão já selecionado
+    // 4. Existem cartões disponíveis
+    if (!transaction && formData.paymentMethod === "CREDIT" && !formData.cardId && cards.length > 0) {
+      const defaultCard = cards.find((card) => card.isDefault);
+      if (defaultCard) {
+        setFormData((prev) => ({ ...prev, cardId: defaultCard.id }));
+      }
+    }
+  }, [formData.paymentMethod, transaction, cards, formData.cardId]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
