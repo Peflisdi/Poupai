@@ -437,7 +437,13 @@ function TransactionsContent() {
 
 export default function TransactionsPage() {
   return (
-    <Suspense fallback={<div className="p-8"><StatCardSkeleton /></div>}>
+    <Suspense
+      fallback={
+        <div className="p-8">
+          <StatCardSkeleton />
+        </div>
+      }
+    >
       <TransactionsContent />
     </Suspense>
   );
