@@ -106,20 +106,22 @@ export function CurrencyInput({
   }
 
   return (
-    <div className="relative">
-      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 dark:text-neutral-400 font-medium">
-        R$
-      </span>
-      <Input
-        type="text"
-        value={displayValue}
-        onChange={handleChange}
-        onKeyDown={handleKeyDown}
-        placeholder={placeholder}
-        className={`pl-10 text-right font-mono text-lg ${className}`}
-        disabled={disabled}
-        inputMode="numeric"
-      />
+    <div>
+      <div className="relative">
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 dark:text-neutral-400 font-medium pointer-events-none z-10">
+          R$
+        </span>
+        <Input
+          type="text"
+          value={displayValue}
+          onChange={handleChange}
+          onKeyDown={handleKeyDown}
+          placeholder={placeholder}
+          className={`pl-10 text-right font-mono text-lg ${className}`}
+          disabled={disabled}
+          inputMode="numeric"
+        />
+      </div>
       {displayValue && (
         <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 text-right">
           Digite apenas números • Ex: 5000 = R$ 50,00
