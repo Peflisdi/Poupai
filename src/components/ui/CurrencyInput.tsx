@@ -37,7 +37,7 @@ export function CurrencyInput({
    */
   function formatValueForDisplay(num: number): string {
     if (!num || num === 0) return "";
-    
+
     return new Intl.NumberFormat("pt-BR", {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
@@ -59,10 +59,10 @@ export function CurrencyInput({
    */
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const input = e.target.value;
-    
+
     // Remove tudo que não é número
     const digitsOnly = input.replace(/\D/g, "");
-    
+
     if (digitsOnly === "") {
       setDisplayValue("");
       onChange(0);
@@ -71,14 +71,14 @@ export function CurrencyInput({
 
     // Limita a 12 dígitos (999.999.999,99)
     const limitedDigits = digitsOnly.slice(0, 12);
-    
+
     // Converte centavos para número decimal
     const numericValue = centsToNumber(limitedDigits);
-    
+
     // Formata para exibição
     const formatted = formatValueForDisplay(numericValue);
     setDisplayValue(formatted);
-    
+
     // Notifica mudança
     onChange(numericValue);
   }
@@ -88,8 +88,16 @@ export function CurrencyInput({
    */
   function handleKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     // Permite: backspace, delete, tab, escape, enter, setas
-    const specialKeys = ["Backspace", "Delete", "Tab", "Escape", "Enter", "ArrowLeft", "ArrowRight"];
-    
+    const specialKeys = [
+      "Backspace",
+      "Delete",
+      "Tab",
+      "Escape",
+      "Enter",
+      "ArrowLeft",
+      "ArrowRight",
+    ];
+
     if (specialKeys.includes(e.key)) {
       return;
     }
@@ -122,11 +130,9 @@ export function CurrencyInput({
           inputMode="numeric"
         />
       </div>
-      {displayValue && (
-        <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 text-right">
-          Digite apenas números • Ex: 5000 = R$ 50,00
-        </div>
-      )}
+      <div className="text-xs text-neutral-500 dark:text-neutral-400 mt-1 text-left">
+        Digite apenas números • Ex: 5000 = R$ 50,00
+      </div>
     </div>
   );
 }

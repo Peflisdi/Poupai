@@ -21,6 +21,7 @@ model User {
   image           String?
   currency        String    @default("BRL")
   firstDayOfMonth Int       @default(1)
+  defaultPaymentMethod String? // PIX, CASH, DEBIT, CREDIT, TRANSFER
   createdAt       DateTime  @default(now())
   updatedAt       DateTime  @updatedAt
 
@@ -135,6 +136,7 @@ model Card {
   closingDay Int // 1-31 (dia do mês)
   dueDay     Int // 1-31 (dia do mês)
   color      String   @default("#000000")
+  isDefault  Boolean  @default(false)
   userId     String
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
