@@ -6,11 +6,15 @@ const prisma = new PrismaClient();
 async function main() {
   console.log(" Iniciando seed do banco de dados...");
 
-  // Limpar dados existentes (cuidado em produção!)
+  // Limpar dados existentes (se existirem)
   console.log(" Limpando dados antigos...");
-  await prisma.transaction.deleteMany();
-  await prisma.category.deleteMany();
-  await prisma.user.deleteMany();
+  try {
+    await prisma.transaction.deleteMany();
+    await prisma.category.deleteMany();
+    await prisma.user.deleteMany();
+  } catch (error) {
+    console.log("   Tabelas ainda não existem, continuando...");
+  }
 
   // Criar usuário de teste
   console.log(" Criando usuário de teste...");
