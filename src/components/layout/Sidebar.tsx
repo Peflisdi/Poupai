@@ -14,6 +14,7 @@ import {
   Wallet,
   Menu,
   X,
+  HandCoins,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
@@ -33,6 +34,11 @@ const menuItems = [
     label: "Cartões",
     href: "/cards",
     icon: CreditCard,
+  },
+  {
+    label: "Empréstimos",
+    href: "/emprestimos",
+    icon: HandCoins,
   },
   {
     label: "Objetivos",
