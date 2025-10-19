@@ -15,7 +15,10 @@ export function BarChart({ data, height = 300 }: BarChartProps) {
           const percentage = maxValue > 0 ? (item.value / maxValue) * 100 : 0;
 
           return (
-            <div key={index} className="flex-1 flex flex-col items-center gap-2 min-w-[60px] sm:min-w-0">
+            <div
+              key={index}
+              className="flex-1 flex flex-col items-center gap-2 min-w-[60px] sm:min-w-0"
+            >
               {/* Bar */}
               <div className="w-full flex flex-col justify-end" style={{ height: height - 60 }}>
                 <div
