@@ -81,16 +81,16 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Campos obrigatórios faltando" }, { status: 400 });
     }
 
-    if (closingDay < 1 || closingDay > 28) {
+    if (closingDay < 1 || closingDay > 31) {
       return NextResponse.json(
-        { error: "Dia de fechamento deve estar entre 1 e 28" },
+        { error: "Dia de fechamento deve estar entre 1 e 31" },
         { status: 400 }
       );
     }
 
-    if (dueDay < 1 || dueDay > 28) {
+    if (dueDay < 1 || dueDay > 31) {
       return NextResponse.json(
-        { error: "Dia de vencimento deve estar entre 1 e 28" },
+        { error: "Dia de vencimento deve estar entre 1 e 31" },
         { status: 400 }
       );
     }

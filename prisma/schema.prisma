@@ -132,8 +132,8 @@ model Card {
   name       String
   nickname   String?
   limit      Float
-  closingDay Int // 1-28
-  dueDay     Int // 1-28
+  closingDay Int // 1-31 (dia do mês)
+  dueDay     Int // 1-31 (dia do mês)
   color      String   @default("#000000")
   userId     String
   createdAt  DateTime @default(now())
