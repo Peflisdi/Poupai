@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, Suspense } from "react";
 import { Plus, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useCategories } from "@/hooks/useCategories";
@@ -17,7 +17,7 @@ import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { useSearchParams } from "next/navigation";
 import { StatCardSkeleton, TableRowSkeleton } from "@/components/ui/Skeleton";
 
-export default function TransactionsPage() {
+function TransactionsContent() {
   const searchParams = useSearchParams();
   const { confirm, isOpen, options, onConfirm, onCancel } = useConfirm();
   const { transactions, isLoading, refetch } = useTransactions();
@@ -432,5 +432,13 @@ export default function TransactionsPage() {
         type={options.type}
       />
     </div>
+  );
+}
+
+export default function TransactionsPage() {
+  return (
+    <Suspense fallback={<div className="p-8"><StatCardSkeleton /></div>}>
+      <TransactionsContent />
+    </Suspense>
   );
 }
