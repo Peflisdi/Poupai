@@ -112,7 +112,10 @@ export function TransactionTable({ transactions, onEdit, onDelete }: Transaction
                       👤 {transaction.paidBy}
                     </span>
                     {transaction.isReimbursed && (
-                      <span className="text-xs text-green-600 dark:text-green-400" title="Reembolsado">
+                      <span
+                        className="text-xs text-green-600 dark:text-green-400"
+                        title="Reembolsado"
+                      >
                         ✓
                       </span>
                     )}

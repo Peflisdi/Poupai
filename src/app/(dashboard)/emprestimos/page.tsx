@@ -1,7 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, ArrowUpRight, ArrowDownRight, Clock, CheckCircle, AlertCircle, Wallet } from "lucide-react";
+import {
+  Plus,
+  ArrowUpRight,
+  ArrowDownRight,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  Wallet,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { LoanModal } from "@/components/loans/LoanModal";
 import { PaymentModal } from "@/components/loans/PaymentModal";
@@ -54,17 +62,35 @@ export default function LoansPage() {
 
   const getStatusBadge = (loan: Loan) => {
     const statusConfig = {
-      PENDING: { label: "Pendente", color: "text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20", icon: Clock },
-      PARTIAL: { label: "Parcial", color: "text-blue-600 bg-blue-50 dark:bg-blue-900/20", icon: Clock },
-      PAID: { label: "Pago", color: "text-green-600 bg-green-50 dark:bg-green-900/20", icon: CheckCircle },
-      OVERDUE: { label: "Atrasado", color: "text-red-600 bg-red-50 dark:bg-red-900/20", icon: AlertCircle },
+      PENDING: {
+        label: "Pendente",
+        color: "text-yellow-600 bg-yellow-50 dark:bg-yellow-900/20",
+        icon: Clock,
+      },
+      PARTIAL: {
+        label: "Parcial",
+        color: "text-blue-600 bg-blue-50 dark:bg-blue-900/20",
+        icon: Clock,
+      },
+      PAID: {
+        label: "Pago",
+        color: "text-green-600 bg-green-50 dark:bg-green-900/20",
+        icon: CheckCircle,
+      },
+      OVERDUE: {
+        label: "Atrasado",
+        color: "text-red-600 bg-red-50 dark:bg-red-900/20",
+        icon: AlertCircle,
+      },
     };
 
     const config = statusConfig[loan.status];
     const Icon = config.icon;
 
     return (
-      <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${config.color}`}>
+      <span
+        className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-semibold ${config.color}`}
+      >
         <Icon className="h-3 w-3" />
         {config.label}
       </span>
@@ -95,9 +121,7 @@ export default function LoansPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-neutral-900 dark:text-white mb-2">
-          💰 Empréstimos
-        </h1>
+        <h1 className="text-3xl font-bold text-neutral-900 dark:text-white mb-2">💰 Empréstimos</h1>
         <p className="text-neutral-600 dark:text-neutral-400">
           Gerencie empréstimos feitos e recebidos
         </p>
@@ -117,13 +141,15 @@ export default function LoansPage() {
           </div>
           <h3 className="text-sm font-medium opacity-90 mb-1">Emprestei</h3>
           <p className="text-3xl font-bold mb-2">
-            R$ {summary.lent.total.toLocaleString("pt-BR", {
+            R${" "}
+            {summary.lent.total.toLocaleString("pt-BR", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
           </p>
           <p className="text-sm opacity-75">
-            Pendente: R$ {summary.lent.pending.toLocaleString("pt-BR", {
+            Pendente: R${" "}
+            {summary.lent.pending.toLocaleString("pt-BR", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
@@ -142,13 +168,15 @@ export default function LoansPage() {
           </div>
           <h3 className="text-sm font-medium opacity-90 mb-1">Peguei Emprestado</h3>
           <p className="text-3xl font-bold mb-2">
-            R$ {summary.borrowed.total.toLocaleString("pt-BR", {
+            R${" "}
+            {summary.borrowed.total.toLocaleString("pt-BR", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
           </p>
           <p className="text-sm opacity-75">
-            Pendente: R$ {summary.borrowed.pending.toLocaleString("pt-BR", {
+            Pendente: R${" "}
+            {summary.borrowed.pending.toLocaleString("pt-BR", {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
             })}
@@ -240,17 +268,20 @@ export default function LoansPage() {
                         )}
                         <div className="flex items-center gap-4 text-sm text-neutral-600 dark:text-neutral-400">
                           <span>
-                            Total: R$ {loan.totalAmount.toLocaleString("pt-BR", {
+                            Total: R${" "}
+                            {loan.totalAmount.toLocaleString("pt-BR", {
                               minimumFractionDigits: 2,
                             })}
                           </span>
                           <span>
-                            Pago: R$ {loan.paidAmount.toLocaleString("pt-BR", {
+                            Pago: R${" "}
+                            {loan.paidAmount.toLocaleString("pt-BR", {
                               minimumFractionDigits: 2,
                             })}
                           </span>
                           <span>
-                            Restante: R$ {remainingAmount.toLocaleString("pt-BR", {
+                            Restante: R${" "}
+                            {remainingAmount.toLocaleString("pt-BR", {
                               minimumFractionDigits: 2,
                             })}
                           </span>
@@ -314,7 +345,8 @@ export default function LoansPage() {
                                 {new Date(payment.date).toLocaleDateString("pt-BR")}
                               </span>
                               <span className="font-semibold text-green-600 dark:text-green-400">
-                                R$ {payment.amount.toLocaleString("pt-BR", {
+                                R${" "}
+                                {payment.amount.toLocaleString("pt-BR", {
                                   minimumFractionDigits: 2,
                                 })}
                               </span>

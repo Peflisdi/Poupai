@@ -124,8 +124,7 @@ export async function PUT(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { id, personName, description, totalAmount, installments, dueDate, notes, status } =
-      body;
+    const { id, personName, description, totalAmount, installments, dueDate, notes, status } = body;
 
     if (!id) {
       return NextResponse.json({ error: "ID do empréstimo é obrigatório" }, { status: 400 });

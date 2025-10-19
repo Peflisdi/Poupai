@@ -43,13 +43,13 @@ export async function GET(request: Request) {
       },
     });
 
-    // Calculate summary
+    // Calculate summary (excluding transactions paid by others)
     const monthIncome = transactions
-      .filter((t) => t.type === "INCOME")
+      .filter((t) => t.type === "INCOME" && !t.paidBy)
       .reduce((sum, t) => sum + Number(t.amount), 0);
 
     const monthExpenses = transactions
-      .filter((t) => t.type === "EXPENSE")
+      .filter((t) => t.type === "EXPENSE" && !t.paidBy)
       .reduce((sum, t) => sum + Number(t.amount), 0);
 
     // For now, we'll use a simple balance calculation
@@ -59,9 +59,9 @@ export async function GET(request: Request) {
     // Calculate budget percentage (assuming a budget of monthIncome)
     const budgetPercentage = monthIncome > 0 ? (monthExpenses / monthIncome) * 100 : 0;
 
-    // Group expenses by category
+    // Group expenses by category (excluding transactions paid by others)
     const expensesByCategory = transactions
-      .filter((t) => t.type === "EXPENSE" && t.category)
+      .filter((t) => t.type === "EXPENSE" && t.category && !t.paidBy)
       .reduce((acc, t) => {
         const categoryId = t.categoryId!;
         const existing = acc.find((item) => item.categoryId === categoryId);

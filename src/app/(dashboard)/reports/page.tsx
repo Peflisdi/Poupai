@@ -16,7 +16,6 @@ import {
   ArrowUpCircle,
   ArrowDownCircle,
   Wallet,
-  Users,
 } from "lucide-react";
 import { StatCardSkeleton, ChartSkeleton, CardSkeleton } from "@/components/ui/Skeleton";
 
@@ -207,21 +206,11 @@ export default function ReportsPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Relatórios</h1>
-          <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
-            Análises detalhadas das suas finanças
-          </p>
-        </div>
-
-        <Link
-          href="/reports/by-person"
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-        >
-          <Users className="h-4 w-4" />
-          Ver Gastos por Pessoa
-        </Link>
+      <div>
+        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Relatórios</h1>
+        <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+          Análises detalhadas das suas finanças
+        </p>
       </div>
 
       {/* Period Selector */}

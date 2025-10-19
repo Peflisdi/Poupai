@@ -111,7 +111,12 @@ export function TransactionModal({
     // 2. Método é CREDIT
     // 3. Não tem cartão já selecionado
     // 4. Existem cartões disponíveis
-    if (!transaction && formData.paymentMethod === "CREDIT" && !formData.cardId && cards.length > 0) {
+    if (
+      !transaction &&
+      formData.paymentMethod === "CREDIT" &&
+      !formData.cardId &&
+      cards.length > 0
+    ) {
       const defaultCard = cards.find((card) => card.isDefault);
       if (defaultCard) {
         setFormData((prev) => ({ ...prev, cardId: defaultCard.id }));

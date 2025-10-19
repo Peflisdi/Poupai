@@ -50,6 +50,7 @@ export async function GET(request: Request) {
       where,
       include: {
         category: true,
+        card: true,
       },
       orderBy: { date: "desc" },
     });
@@ -93,9 +94,7 @@ export async function GET(request: Request) {
     });
 
     // Converter para array e ordenar por total pendente
-    const report = Object.values(groupedByPerson).sort(
-      (a, b) => b.totalPending - a.totalPending
-    );
+    const report = Object.values(groupedByPerson).sort((a, b) => b.totalPending - a.totalPending);
 
     return NextResponse.json({
       report,

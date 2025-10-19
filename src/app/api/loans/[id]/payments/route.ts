@@ -4,10 +4,7 @@ import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
 // POST /api/loans/[id]/payments - Adicionar pagamento a um empréstimo
-export async function POST(
-  req: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions);
 
@@ -84,10 +81,13 @@ export async function POST(
       },
     });
 
-    return NextResponse.json({
-      payment,
-      loan: updatedLoan,
-    }, { status: 201 });
+    return NextResponse.json(
+      {
+        payment,
+        loan: updatedLoan,
+      },
+      { status: 201 }
+    );
   } catch (error) {
     console.error("Erro ao adicionar pagamento:", error);
     return NextResponse.json({ error: "Erro ao adicionar pagamento" }, { status: 500 });

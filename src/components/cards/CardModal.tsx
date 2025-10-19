@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
+import { CurrencyInput } from "@/components/ui/CurrencyInput";
 import { Card, CreateCardData, UpdateCardData } from "@/services/cardService";
 import { showToast, toastMessages } from "@/lib/toast";
 import { cardValidations, ValidationError } from "@/lib/validations";
@@ -183,14 +184,10 @@ export function CardModal({ isOpen, onClose, onSave, card }: CardModalProps) {
             <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
               Limite do Cartão
             </label>
-            <Input
-              type="number"
-              step="0.01"
-              min="0"
-              value={formData.limit}
-              onChange={(e) => setFormData({ ...formData, limit: e.target.value })}
-              placeholder="Digite o limite"
-              required
+            <CurrencyInput
+              value={typeof formData.limit === 'number' ? formData.limit : parseFloat(formData.limit) || 0}
+              onChange={(value) => setFormData({ ...formData, limit: value })}
+              placeholder="0,00"
               className={hasError("Limite") ? "border-red-500 dark:border-red-500" : ""}
             />
             {hasError("Limite") && (

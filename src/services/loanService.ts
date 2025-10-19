@@ -113,7 +113,10 @@ export const loanService = {
   },
 
   // Adicionar pagamento
-  async addPayment(loanId: string, data: CreatePaymentData): Promise<{ payment: LoanPayment; loan: Loan }> {
+  async addPayment(
+    loanId: string,
+    data: CreatePaymentData
+  ): Promise<{ payment: LoanPayment; loan: Loan }> {
     const res = await fetch(`/api/loans/${loanId}/payments`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },

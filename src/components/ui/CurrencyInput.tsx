@@ -125,7 +125,7 @@ export function CurrencyInput({
           onChange={handleChange}
           onKeyDown={handleKeyDown}
           placeholder={placeholder}
-          className={`pl-10 text-right font-mono text-lg ${className}`}
+          className={`pl-10 text-left font-mono text-lg ${className}`}
           disabled={disabled}
           inputMode="numeric"
         />

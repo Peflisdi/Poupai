@@ -15,6 +15,7 @@ import {
   Menu,
   X,
   HandCoins,
+  Users,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ThemeToggle } from "./ThemeToggle";
@@ -39,6 +40,11 @@ const menuItems = [
     label: "Empréstimos",
     href: "/emprestimos",
     icon: HandCoins,
+  },
+  {
+    label: "Gastos por Pessoa",
+    href: "/reports/by-person",
+    icon: Users,
   },
   {
     label: "Objetivos",

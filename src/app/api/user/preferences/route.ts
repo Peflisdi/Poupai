@@ -47,10 +47,7 @@ export async function PATCH(req: NextRequest) {
     // Validar método de pagamento
     const validMethods = ["PIX", "CREDIT", "DEBIT", "CASH", "TRANSFER"];
     if (defaultPaymentMethod && !validMethods.includes(defaultPaymentMethod)) {
-      return NextResponse.json(
-        { error: "Método de pagamento inválido" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Método de pagamento inválido" }, { status: 400 });
     }
 
     const user = await prisma.user.findUnique({

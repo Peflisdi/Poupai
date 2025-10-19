@@ -129,11 +129,7 @@ export default function ReportsByPersonPage() {
             <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
               Data Início
             </label>
-            <Input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-            />
+            <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
           </div>
           <div>
             <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
@@ -296,7 +292,9 @@ export default function ReportsByPersonPage() {
                 {/* Transactions Toggle */}
                 <button
                   onClick={() =>
-                    setExpandedPerson(expandedPerson === person.personName ? null : person.personName)
+                    setExpandedPerson(
+                      expandedPerson === person.personName ? null : person.personName
+                    )
                   }
                   className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                 >
@@ -317,7 +315,9 @@ export default function ReportsByPersonPage() {
                           </p>
                           <p className="text-xs text-neutral-500 dark:text-neutral-400">
                             {new Date(transaction.date).toLocaleDateString("pt-BR")}
-                            {transaction.category && ` • ${transaction.category.icon} ${transaction.category.name}`}
+                            {transaction.category &&
+                              ` • ${transaction.category.icon} ${transaction.category.name}`}
+                            {transaction.card && ` • 💳 ${transaction.card.name}`}
                           </p>
                         </div>
                         <div className="flex items-center gap-3">

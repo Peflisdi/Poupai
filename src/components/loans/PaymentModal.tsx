@@ -16,7 +16,7 @@ interface PaymentModalProps {
 
 export function PaymentModal({ isOpen, onClose, onSave, loan }: PaymentModalProps) {
   const remainingAmount = loan.totalAmount - loan.paidAmount;
-  
+
   const [formData, setFormData] = useState<CreatePaymentData>({
     amount: remainingAmount,
     date: new Date().toISOString().split("T")[0],
@@ -63,7 +63,8 @@ export function PaymentModal({ isOpen, onClose, onSave, loan }: PaymentModalProp
               Adicionar Pagamento
             </h2>
             <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
-              {loan.personName} • Restante: R$ {remainingAmount.toLocaleString("pt-BR", {
+              {loan.personName} • Restante: R${" "}
+              {remainingAmount.toLocaleString("pt-BR", {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
               })}
@@ -94,10 +95,13 @@ export function PaymentModal({ isOpen, onClose, onSave, loan }: PaymentModalProp
                 <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
                   {formData.amount >= remainingAmount
                     ? "✅ Pagamento completo"
-                    : `⏳ Restará: R$ ${(remainingAmount - formData.amount).toLocaleString("pt-BR", {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      })}`}
+                    : `⏳ Restará: R$ ${(remainingAmount - formData.amount).toLocaleString(
+                        "pt-BR",
+                        {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }
+                      )}`}
                 </p>
               )}
             </div>
