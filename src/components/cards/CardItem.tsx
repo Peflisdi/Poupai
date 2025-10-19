@@ -51,11 +51,7 @@ export function CardItem({
               <Pencil className="h-4 w-4 text-white" />
             </button>
             <button
-              onClick={() => {
-                if (confirm(`Deseja realmente deletar o cartão "${card.name}"?`)) {
-                  onDelete(card.id);
-                }
-              }}
+              onClick={() => onDelete(card.id)}
               className="p-2 hover:bg-white/20 rounded-lg transition-colors"
               title="Deletar"
             >

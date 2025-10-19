@@ -34,7 +34,8 @@ yarn-error.log*
 next-env.d.ts
 
 # Prisma
-prisma/migrations
+# NÃO ignore as migrations - elas são necessárias para o deploy!
+# prisma/migrations
 
 # Documentation with sensitive info (exclude from repository)
 ARCHITECTURE.md

@@ -5,6 +5,8 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Goal, CreateGoalData, goalService } from "@/services/goalService";
+import { showToast, toastMessages } from "@/lib/toast";
+import { goalValidations, ValidationError } from "@/lib/validations";
 
 interface GoalModalProps {
   goal?: Goal | null;
@@ -38,6 +40,7 @@ export function GoalModal({ goal, onClose, onSave }: GoalModalProps) {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
 
   useEffect(() => {
     if (goal) {
@@ -54,15 +57,19 @@ export function GoalModal({ goal, onClose, onSave }: GoalModalProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+    setValidationErrors([]);
 
-    if (!formData.name.trim()) {
-      setError("Nome é obrigatório");
-      return;
-    }
+    // Validar formulário
+    const validation = goalValidations.validate({
+      name: formData.name.trim(),
+      targetAmount: Number(formData.targetAmount),
+      currentAmount: 0,
+      targetDate: formData.deadline ? new Date(formData.deadline) : new Date(),
+    });
 
-    const targetAmount = Number(formData.targetAmount);
-    if (isNaN(targetAmount) || targetAmount <= 0) {
-      setError("Valor alvo deve ser positivo");
+    if (!validation.isValid) {
+      setValidationErrors(validation.errors);
+      showToast.error("Por favor, corrija os erros no formulário");
       return;
     }
 
@@ -79,17 +86,30 @@ export function GoalModal({ goal, onClose, onSave }: GoalModalProps) {
 
       if (goal) {
         await goalService.updateGoal({ ...data, id: goal.id });
+        showToast.success(toastMessages.goals.updated);
       } else {
         await goalService.createGoal(data);
+        showToast.success(toastMessages.goals.created);
       }
 
       onSave();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao salvar meta");
+      const errorMessage = err instanceof Error ? err.message : toastMessages.goals.error;
+      setError(errorMessage);
+      showToast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const getErrorMessage = (field: string): string | undefined => {
+    const error = validationErrors.find((e) => e.field === field);
+    return error?.message;
+  };
+
+  const hasError = (field: string): boolean => {
+    return validationErrors.some((e) => e.field === field);
   };
 
   return (
@@ -132,7 +152,11 @@ export function GoalModal({ goal, onClose, onSave }: GoalModalProps) {
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Ex: Viagem para Europa"
                 required
+                className={hasError("Nome") ? "border-red-500 dark:border-red-500" : ""}
               />
+              {hasError("Nome") && (
+                <p className="text-xs text-red-500 mt-1">{getErrorMessage("Nome")}</p>
+              )}
             </div>
 
             {/* Valor Alvo */}
@@ -148,7 +172,11 @@ export function GoalModal({ goal, onClose, onSave }: GoalModalProps) {
                 onChange={(e) => setFormData({ ...formData, targetAmount: e.target.value })}
                 placeholder="0,00"
                 required
+                className={hasError("Valor alvo") ? "border-red-500 dark:border-red-500" : ""}
               />
+              {hasError("Valor alvo") && (
+                <p className="text-xs text-red-500 mt-1">{getErrorMessage("Valor alvo")}</p>
+              )}
             </div>
 
             {/* Prazo (opcional) */}
@@ -161,7 +189,11 @@ export function GoalModal({ goal, onClose, onSave }: GoalModalProps) {
                 value={formData.deadline}
                 onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
                 onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
+                className={hasError("Data alvo") ? "border-red-500 dark:border-red-500" : ""}
               />
+              {hasError("Data alvo") && (
+                <p className="text-xs text-red-500 mt-1">{getErrorMessage("Data alvo")}</p>
+              )}
             </div>
 
             {/* Ícone */}

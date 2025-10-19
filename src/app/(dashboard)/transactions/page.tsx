@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Plus, ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 import { useTransactions } from "@/hooks/useTransactions";
 import { useCategories } from "@/hooks/useCategories";
@@ -11,8 +11,15 @@ import { TransactionTable } from "@/components/transactions/TransactionTable";
 import { TransactionFilters } from "@/components/transactions/TransactionFilters";
 import { TransactionModal } from "@/components/transactions/TransactionModal";
 import { Transaction, TransactionFormData } from "@/types";
+import { showToast, toastMessages } from "@/lib/toast";
+import { useConfirm } from "@/hooks/useConfirm";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { useSearchParams } from "next/navigation";
+import { StatCardSkeleton, TableRowSkeleton } from "@/components/ui/Skeleton";
 
 export default function TransactionsPage() {
+  const searchParams = useSearchParams();
+  const { confirm, isOpen, options, onConfirm, onCancel } = useConfirm();
   const { transactions, isLoading, refetch } = useTransactions();
   const { categories } = useCategories();
 
@@ -21,6 +28,16 @@ export default function TransactionsPage() {
 
   // Filtros
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Aplicar filtro da URL quando a página carregar
+  useEffect(() => {
+    const searchQuery = searchParams.get("search");
+    if (searchQuery) {
+      setSearchTerm(searchQuery);
+      // Limpar o parâmetro da URL após aplicar o filtro
+      window.history.replaceState({}, "", "/transactions");
+    }
+  }, [searchParams]);
   const [selectedType, setSelectedType] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("");
   const [selectedMonth, setSelectedMonth] = useState("all"); // "all", "recent", ou "YYYY-MM"
@@ -132,23 +149,78 @@ export default function TransactionsPage() {
   };
 
   const handleDeleteTransaction = async (id: string) => {
-    if (!confirm("Tem certeza que deseja deletar esta transação?")) return;
+    const transaction = transactions.find((t) => t.id === id);
+    const confirmed = await confirm({
+      title: "Deletar Transação",
+      message: `Tem certeza que deseja deletar a transação "${
+        transaction?.description || "sem descrição"
+      }"? Esta ação não pode ser desfeita.`,
+      confirmText: "Deletar",
+      cancelText: "Cancelar",
+      type: "danger",
+    });
+
+    if (!confirmed) return;
 
     try {
       await transactionService.delete(id);
+      showToast.success(toastMessages.transactions.deleted);
       refetch();
     } catch (error) {
       console.error("Erro ao deletar transação:", error);
-      alert("Erro ao deletar transação. Tente novamente.");
+      showToast.error(toastMessages.transactions.error);
     }
   };
 
   if (isLoading) {
     return (
-      <div className="flex h-[calc(100vh-6rem)] items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-text-tertiary border-t-text-primary mx-auto mb-4"></div>
-          <p className="text-text-secondary">Carregando transações...</p>
+      <div className="space-y-6">
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="h-8 w-48 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
+            <div className="h-4 w-64 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
+          </div>
+          <div className="h-10 w-40 bg-neutral-200 dark:bg-neutral-800 rounded-lg animate-pulse" />
+        </div>
+
+        {/* Stats Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+        </div>
+
+        {/* Filters Skeleton */}
+        <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-6">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div
+                key={i}
+                className="h-10 bg-neutral-200 dark:bg-neutral-800 rounded-lg animate-pulse"
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Table Skeleton */}
+        <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 overflow-hidden">
+          <table className="w-full">
+            <thead className="bg-neutral-50 dark:bg-neutral-800 border-b border-neutral-200 dark:border-neutral-700">
+              <tr>
+                {[1, 2, 3, 4, 5].map((i) => (
+                  <th key={i} className="px-4 py-3">
+                    <div className="h-4 bg-neutral-200 dark:bg-neutral-700 rounded animate-pulse" />
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+                <TableRowSkeleton key={i} />
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
     );
@@ -346,6 +418,18 @@ export default function TransactionsPage() {
         onSave={handleSaveTransaction}
         transaction={editingTransaction}
         categories={categories || []}
+      />
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={isOpen}
+        onClose={onCancel}
+        onConfirm={onConfirm}
+        title={options.title}
+        message={options.message}
+        confirmText={options.confirmText}
+        cancelText={options.cancelText}
+        type={options.type}
       />
     </div>
   );

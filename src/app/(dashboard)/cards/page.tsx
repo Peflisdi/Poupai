@@ -6,8 +6,13 @@ import { Button } from "@/components/ui/Button";
 import { CardModal } from "@/components/cards/CardModal";
 import { CardItem } from "@/components/cards/CardItem";
 import { cardService, Card, CreateCardData, UpdateCardData } from "@/services/cardService";
+import { showToast, toastMessages } from "@/lib/toast";
+import { useConfirm } from "@/hooks/useConfirm";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { CreditCardSkeleton } from "@/components/ui/Skeleton";
 
 export default function CardsPage() {
+  const { confirm, isOpen, options, onConfirm, onCancel } = useConfirm();
   const [cards, setCards] = useState<Card[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -52,21 +57,46 @@ export default function CardsPage() {
   };
 
   const handleDeleteCard = async (id: string) => {
+    const card = cards.find((c) => c.id === id);
+    const confirmed = await confirm({
+      title: "Deletar Cartão",
+      message: `Tem certeza que deseja deletar o cartão "${
+        card?.name || "este cartão"
+      }"? Todas as transações vinculadas serão mantidas, mas sem referência ao cartão.`,
+      confirmText: "Deletar",
+      cancelText: "Cancelar",
+      type: "danger",
+    });
+
+    if (!confirmed) return;
+
     try {
       await cardService.deleteCard(id);
+      showToast.success(toastMessages.cards.deleted);
       await fetchCards();
     } catch (error) {
       console.error("Erro ao deletar cartão:", error);
-      alert("Erro ao deletar cartão. Tente novamente.");
+      showToast.error(toastMessages.cards.error);
     }
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-96">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent mx-auto mb-4"></div>
-          <p className="text-text-secondary">Carregando cartões...</p>
+      <div className="space-y-6">
+        {/* Header Skeleton */}
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <div className="h-10 w-56 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
+            <div className="h-4 w-96 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
+          </div>
+          <div className="h-10 w-44 bg-neutral-200 dark:bg-neutral-800 rounded-lg animate-pulse" />
+        </div>
+
+        {/* Cards Grid Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map((i) => (
+            <CreditCardSkeleton key={i} />
+          ))}
         </div>
       </div>
     );
@@ -173,6 +203,18 @@ export default function CardsPage() {
         }}
         onSave={handleSaveCard}
         card={editingCard}
+      />
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={isOpen}
+        onClose={onCancel}
+        onConfirm={onConfirm}
+        title={options.title}
+        message={options.message}
+        confirmText={options.confirmText}
+        cancelText={options.cancelText}
+        type={options.type}
       />
     </div>
   );

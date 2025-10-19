@@ -12,6 +12,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
     }
 
+    console.log("Criando compra parcelada para userId:", session.user.id);
+
     const body = await request.json();
     const { description, totalAmount, installments, startDate, categoryId, cardId, paymentMethod } =
       body;
@@ -31,19 +33,60 @@ export async function POST(request: Request) {
     // Calcular valor de cada parcela
     const installmentAmount = totalAmount / installments;
 
-    // Criar a compra parcelada
-    const installmentPurchase = await prisma.installmentPurchase.create({
-      data: {
-        description,
-        totalAmount,
-        installments,
-        installmentAmount,
-        startDate: new Date(startDate),
-        paymentMethod: paymentMethod || "CREDIT",
-        userId: session.user.id,
-        categoryId: categoryId || null,
-        cardId: cardId || null,
-      },
+    // Verificar se o usuário existe
+    const userExists = await prisma.user.findUnique({
+      where: { id: session.user.id },
+    });
+
+    if (!userExists) {
+      console.error("Usuário não encontrado:", session.user.id);
+      return NextResponse.json(
+        {
+          error: "Sessão inválida. Por favor, faça logout e login novamente.",
+        },
+        { status: 401 }
+      );
+    }
+
+    console.log("Dados da compra parcelada:", {
+      description,
+      totalAmount,
+      installments,
+      installmentAmount,
+      startDate,
+      userId: session.user.id,
+      categoryId,
+      cardId,
+    });
+
+    // Criar a compra parcelada usando uma transação do Prisma para garantir atomicidade
+    const installmentPurchase = await prisma.$transaction(async (tx) => {
+      // Criar a compra parcelada
+      const purchase = await tx.installmentPurchase.create({
+        data: {
+          description,
+          totalAmount,
+          installments,
+          installmentAmount,
+          startDate: new Date(startDate),
+          paymentMethod: paymentMethod || "CREDIT",
+          user: {
+            connect: { id: session.user.id },
+          },
+          ...(categoryId && {
+            category: {
+              connect: { id: categoryId },
+            },
+          }),
+          ...(cardId && {
+            card: {
+              connect: { id: cardId },
+            },
+          }),
+        },
+      });
+
+      return purchase;
     });
 
     // Criar as transações para cada parcela

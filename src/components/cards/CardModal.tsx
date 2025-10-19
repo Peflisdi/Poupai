@@ -5,6 +5,8 @@ import { X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Card, CreateCardData, UpdateCardData } from "@/services/cardService";
+import { showToast, toastMessages } from "@/lib/toast";
+import { cardValidations, ValidationError } from "@/lib/validations";
 
 interface CardModalProps {
   isOpen: boolean;
@@ -34,6 +36,7 @@ export function CardModal({ isOpen, onClose, onSave, card }: CardModalProps) {
     color: "#000000",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
 
   useEffect(() => {
     if (card) {
@@ -59,6 +62,25 @@ export function CardModal({ isOpen, onClose, onSave, card }: CardModalProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Limpar erros anteriores
+    setValidationErrors([]);
+
+    // Validar formulário
+    const validation = cardValidations.validate({
+      name: formData.name,
+      limit: Number(formData.limit),
+      closingDay: Number(formData.closingDay),
+      dueDay: Number(formData.dueDay),
+      color: formData.color,
+    });
+
+    if (!validation.isValid) {
+      setValidationErrors(validation.errors);
+      showToast.error("Por favor, corrija os erros no formulário");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const data = {
@@ -72,16 +94,27 @@ export function CardModal({ isOpen, onClose, onSave, card }: CardModalProps) {
 
       if (card) {
         await onSave({ ...data, id: card.id });
+        showToast.success(toastMessages.cards.updated);
       } else {
         await onSave(data);
+        showToast.success(toastMessages.cards.created);
       }
       onClose();
     } catch (error) {
       console.error("Erro ao salvar cartão:", error);
-      alert("Erro ao salvar. Tente novamente.");
+      showToast.error(toastMessages.cards.error);
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getErrorMessage = (field: string): string | undefined => {
+    const error = validationErrors.find((e) => e.field === field);
+    return error?.message;
+  };
+
+  const hasError = (field: string): boolean => {
+    return validationErrors.some((e) => e.field === field);
   };
 
   if (!isOpen) return null;
@@ -121,7 +154,11 @@ export function CardModal({ isOpen, onClose, onSave, card }: CardModalProps) {
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Ex: Nubank Mastercard, Inter Visa..."
               required
+              className={hasError("Nome") ? "border-red-500 dark:border-red-500" : ""}
             />
+            {hasError("Nome") && (
+              <p className="text-xs text-red-500 mt-1">{getErrorMessage("Nome")}</p>
+            )}
           </div>
 
           {/* Apelido (opcional) */}
@@ -148,9 +185,13 @@ export function CardModal({ isOpen, onClose, onSave, card }: CardModalProps) {
               min="0"
               value={formData.limit}
               onChange={(e) => setFormData({ ...formData, limit: e.target.value })}
-              placeholder="Digite o limite do cartão"
+              placeholder="Digite o limite"
               required
+              className={hasError("Limite") ? "border-red-500 dark:border-red-500" : ""}
             />
+            {hasError("Limite") && (
+              <p className="text-xs text-red-500 mt-1">{getErrorMessage("Limite")}</p>
+            )}
           </div>
 
           {/* Dias de fechamento e vencimento */}
@@ -162,12 +203,18 @@ export function CardModal({ isOpen, onClose, onSave, card }: CardModalProps) {
               <Input
                 type="number"
                 min="1"
-                max="28"
+                max="31"
                 value={formData.closingDay}
                 onChange={(e) => setFormData({ ...formData, closingDay: e.target.value })}
-                placeholder="1-28"
+                placeholder="1-31"
                 required
+                className={
+                  hasError("Dia de fechamento") ? "border-red-500 dark:border-red-500" : ""
+                }
               />
+              {hasError("Dia de fechamento") && (
+                <p className="text-xs text-red-500 mt-1">{getErrorMessage("Dia de fechamento")}</p>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
@@ -176,12 +223,18 @@ export function CardModal({ isOpen, onClose, onSave, card }: CardModalProps) {
               <Input
                 type="number"
                 min="1"
-                max="28"
+                max="31"
                 value={formData.dueDay}
                 onChange={(e) => setFormData({ ...formData, dueDay: e.target.value })}
-                placeholder="1-28"
+                placeholder="1-31"
                 required
+                className={
+                  hasError("Dia de vencimento") ? "border-red-500 dark:border-red-500" : ""
+                }
               />
+              {hasError("Dia de vencimento") && (
+                <p className="text-xs text-red-500 mt-1">{getErrorMessage("Dia de vencimento")}</p>
+              )}
             </div>
           </div>
 

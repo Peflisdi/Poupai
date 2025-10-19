@@ -6,6 +6,7 @@ import { SummaryCards } from "@/components/dashboard/SummaryCards";
 import { RecentTransactions } from "@/components/dashboard/RecentTransactions";
 import { DonutChartWithIcons } from "@/components/dashboard/DonutChartWithIcons";
 import { MonthlyTrendChart } from "@/components/dashboard/MonthlyTrendChart";
+import { StatCardSkeleton, ChartSkeleton, ListSkeleton } from "@/components/ui/Skeleton";
 import { useState } from "react";
 
 export default function DashboardPage() {
@@ -15,10 +16,27 @@ export default function DashboardPage() {
 
   if (isSummaryLoading || isTransactionsLoading) {
     return (
-      <div className="flex h-[calc(100vh-6rem)] items-center justify-center">
-        <div className="text-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-4 border-text-tertiary border-t-text-primary mx-auto mb-4"></div>
-          <p className="text-text-secondary">Carregando dashboard...</p>
+      <div className="space-y-6">
+        {/* Summary Cards Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+        </div>
+
+        {/* Charts Grid Skeleton */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <ChartSkeleton />
+          <ChartSkeleton />
+        </div>
+
+        {/* Recent Transactions Skeleton */}
+        <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-6">
+          <div className="mb-4">
+            <div className="h-6 w-48 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
+          </div>
+          <ListSkeleton rows={5} />
         </div>
       </div>
     );

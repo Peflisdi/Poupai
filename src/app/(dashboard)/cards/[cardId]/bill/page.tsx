@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import { ArrowLeft, Calendar, CreditCard, TrendingDown, Target } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { BillPieChart, CategoryAccordion } from "@/components/cards";
+import { showToast } from "@/lib/toast";
 
 interface CategoryData {
   id: string;
@@ -68,6 +69,7 @@ export default function CardBillPage() {
       setBillData(data);
     } catch (error) {
       console.error("Erro ao buscar fatura:", error);
+      showToast.error("Erro ao carregar fatura do cartão");
     } finally {
       setIsLoading(false);
     }

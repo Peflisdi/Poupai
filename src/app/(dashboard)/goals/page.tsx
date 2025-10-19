@@ -6,9 +6,14 @@ import { useGoals } from "@/hooks/useGoals";
 import { GoalCard } from "@/components/goals/GoalCard";
 import { GoalModal } from "@/components/goals/GoalModal";
 import { DepositModal } from "@/components/goals/DepositModal";
-import { Goal } from "@/services/goalService";
+import { Goal, goalService } from "@/services/goalService";
+import { showToast, toastMessages } from "@/lib/toast";
+import { useConfirm } from "@/hooks/useConfirm";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { GoalCardSkeleton } from "@/components/ui/Skeleton";
 
 export default function GoalsPage() {
+  const { confirm, isOpen, options, onConfirm, onCancel } = useConfirm();
   const { goals, isLoading, error, refetch } = useGoals();
   const [isGoalModalOpen, setIsGoalModalOpen] = useState(false);
   const [isDepositModalOpen, setIsDepositModalOpen] = useState(false);
@@ -57,18 +62,47 @@ export default function GoalsPage() {
     handleCloseDepositModal();
   };
 
-  const handleGoalDeleted = (id: string) => {
-    refetch();
+  const handleGoalDeleted = async (id: string) => {
+    const goal = goals.find((g) => g.id === id);
+    const confirmed = await confirm({
+      title: "Deletar Meta",
+      message: `Tem certeza que deseja deletar a meta "${
+        goal?.name || "esta meta"
+      }"? Esta ação não pode ser desfeita e todos os depósitos serão perdidos.`,
+      confirmText: "Deletar",
+      cancelText: "Cancelar",
+      type: "danger",
+    });
+
+    if (!confirmed) return;
+
+    try {
+      await goalService.deleteGoal(id);
+      showToast.success(toastMessages.goals.deleted);
+      refetch();
+    } catch (error) {
+      console.error("Erro ao deletar meta:", error);
+      showToast.error(toastMessages.goals.error);
+    }
   };
 
   if (isLoading) {
     return (
       <div className="space-y-6">
+        {/* Header Skeleton */}
         <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Metas Financeiras</h1>
+          <div className="space-y-2">
+            <div className="h-8 w-56 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
+            <div className="h-4 w-96 bg-neutral-200 dark:bg-neutral-800 rounded animate-pulse" />
+          </div>
+          <div className="h-10 w-36 bg-neutral-200 dark:bg-neutral-800 rounded-lg animate-pulse" />
         </div>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-black dark:border-white"></div>
+
+        {/* Goals Grid Skeleton */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <GoalCardSkeleton key={i} />
+          ))}
         </div>
       </div>
     );
@@ -169,6 +203,18 @@ export default function GoalsPage() {
           onDeposit={handleDepositAdded}
         />
       )}
+
+      {/* Confirm Dialog */}
+      <ConfirmDialog
+        isOpen={isOpen}
+        onClose={onCancel}
+        onConfirm={onConfirm}
+        title={options.title}
+        message={options.message}
+        confirmText={options.confirmText}
+        cancelText={options.cancelText}
+        type={options.type}
+      />
     </div>
   );
 }

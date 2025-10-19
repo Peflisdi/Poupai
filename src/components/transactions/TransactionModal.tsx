@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/Input";
 import { Select } from "@/components/ui/Select";
 import { installmentService } from "@/services/installmentService";
 import { useCards } from "@/hooks/useCards";
+import { showToast, toastMessages } from "@/lib/toast";
+import { transactionValidations, ValidationError } from "@/lib/validations";
 
 interface TransactionModalProps {
   isOpen: boolean;
@@ -37,6 +39,7 @@ export function TransactionModal({
   const [isLoading, setIsLoading] = useState(false);
   const [isInstallment, setIsInstallment] = useState(false);
   const [installments, setInstallments] = useState(2);
+  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
 
   useEffect(() => {
     if (transaction) {
@@ -64,6 +67,25 @@ export function TransactionModal({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Limpar erros anteriores
+    setValidationErrors([]);
+
+    // Validar formulário
+    const validation = transactionValidations.validate({
+      description: formData.description || "",
+      amount: Number(formData.amount),
+      date: formData.date,
+      categoryId: formData.categoryId,
+      installments: isInstallment ? installments : undefined,
+    });
+
+    if (!validation.isValid) {
+      setValidationErrors(validation.errors);
+      showToast.error("Por favor, corrija os erros no formulário");
+      return;
+    }
+
     setIsLoading(true);
     try {
       const amount = Number(formData.amount);
@@ -79,19 +101,39 @@ export function TransactionModal({
           cardId: formData.cardId,
           paymentMethod: formData.paymentMethod,
         });
+        showToast.success(`Compra parcelada em ${installments}x criada com sucesso!`);
       } else {
         // Transação normal
         await onSave({ ...formData, amount });
+        showToast.success(
+          transaction ? toastMessages.transactions.updated : toastMessages.transactions.created
+        );
       }
       onClose();
       // Recarregar a página para mostrar as novas transações
       window.location.reload();
     } catch (error) {
       console.error("Erro ao salvar transação:", error);
-      alert("Erro ao salvar. Tente novamente.");
+      const errorMessage = error instanceof Error ? error.message : "Erro ao salvar transação";
+
+      // Se for erro de sessão inválida, mostrar mensagem específica
+      if (errorMessage.includes("Sessão inválida") || errorMessage.includes("não encontrado")) {
+        showToast.error("Sua sessão expirou. Por favor, faça logout e login novamente.");
+      } else {
+        showToast.error(errorMessage);
+      }
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const getErrorMessage = (field: string): string | undefined => {
+    const error = validationErrors.find((e) => e.field === field);
+    return error?.message;
+  };
+
+  const hasError = (field: string): boolean => {
+    return validationErrors.some((e) => e.field === field);
   };
 
   if (!isOpen) return null;
@@ -163,7 +205,11 @@ export function TransactionModal({
                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 placeholder="Ex: Almoço, Salário, Uber..."
                 required
+                className={hasError("Descrição") ? "border-red-500 dark:border-red-500" : ""}
               />
+              {hasError("Descrição") && (
+                <p className="text-xs text-red-500 mt-1">{getErrorMessage("Descrição")}</p>
+              )}
             </div>
 
             {/* Valor */}
@@ -179,7 +225,11 @@ export function TransactionModal({
                 onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                 placeholder="Digite o valor"
                 required
+                className={hasError("Valor") ? "border-red-500 dark:border-red-500" : ""}
               />
+              {hasError("Valor") && (
+                <p className="text-xs text-red-500 mt-1">{getErrorMessage("Valor")}</p>
+              )}
             </div>
 
             {/* Data */}
@@ -193,7 +243,11 @@ export function TransactionModal({
                 onChange={(e) => setFormData({ ...formData, date: new Date(e.target.value) })}
                 onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
                 required
+                className={hasError("Data") ? "border-red-500 dark:border-red-500" : ""}
               />
+              {hasError("Data") && (
+                <p className="text-xs text-red-500 mt-1">{getErrorMessage("Data")}</p>
+              )}
             </div>
 
             {/* Categoria */}
@@ -205,13 +259,18 @@ export function TransactionModal({
                 value={formData.categoryId}
                 onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
                 required
+                className={hasError("Categoria") ? "border-red-500 dark:border-red-500" : ""}
               >
+                <option value="">Selecione uma categoria</option>
                 {categories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.icon} {cat.name}
                   </option>
                 ))}
               </Select>
+              {hasError("Categoria") && (
+                <p className="text-xs text-red-500 mt-1">{getErrorMessage("Categoria")}</p>
+              )}
             </div>
 
             {/* Método de Pagamento */}
@@ -264,7 +323,7 @@ export function TransactionModal({
                 </Select>
                 {cards.length === 0 && (
                   <p className="mt-1 text-xs text-neutral-600 dark:text-neutral-400">
-                    Nenhum cartão cadastrado. Vá em "Cartões" para adicionar.
+                    Nenhum cartão cadastrado. Vá em &quot;Cartões&quot; para adicionar.
                   </p>
                 )}
               </div>
@@ -300,6 +359,7 @@ export function TransactionModal({
                       value={String(installments)}
                       onChange={(e) => setInstallments(Number(e.target.value))}
                       required
+                      className={hasError("Parcelas") ? "border-red-500 dark:border-red-500" : ""}
                     >
                       {Array.from({ length: 47 }, (_, i) => i + 2).map((num) => (
                         <option key={num} value={num}>
@@ -307,9 +367,14 @@ export function TransactionModal({
                         </option>
                       ))}
                     </Select>
-                    <p className="mt-2 text-xs text-neutral-600 dark:text-neutral-400">
-                      💡 Serão criadas {installments} transações, uma para cada mês
-                    </p>
+                    {hasError("Parcelas") && (
+                      <p className="text-xs text-red-500 mt-1">{getErrorMessage("Parcelas")}</p>
+                    )}
+                    {!hasError("Parcelas") && (
+                      <p className="mt-2 text-xs text-neutral-600 dark:text-neutral-400">
+                        💡 Serão criadas {installments} transações, uma para cada mês
+                      </p>
+                    )}
                   </div>
                 )}
               </div>

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { Goal, goalService } from "@/services/goalService";
 import { formatCurrency } from "@/lib/utils";
+import { showToast, toastMessages } from "@/lib/toast";
 
 interface DepositModalProps {
   goal: Goal;
@@ -38,10 +39,13 @@ export function DepositModal({ goal, onClose, onDeposit }: DepositModalProps) {
         amount,
         note: note.trim() || undefined,
       });
+      showToast.success(toastMessages.goals.depositAdded);
       onDeposit();
       onClose();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Erro ao adicionar depósito");
+      const errorMessage = err instanceof Error ? err.message : "Erro ao adicionar depósito";
+      setError(errorMessage);
+      showToast.error(errorMessage);
     } finally {
       setIsSubmitting(false);
     }

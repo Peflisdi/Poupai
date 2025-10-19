@@ -63,11 +63,7 @@ export function GoalCard({ goal, onEdit, onDelete, onDeposit }: GoalCardProps) {
             <Pencil className="h-4 w-4 text-text-secondary" />
           </button>
           <button
-            onClick={() => {
-              if (confirm(`Deseja realmente deletar a meta "${goal.name}"?`)) {
-                onDelete(goal.id);
-              }
-            }}
+            onClick={() => onDelete(goal.id)}
             className="p-2 hover:bg-background-tertiary rounded-lg transition-colors"
             title="Deletar"
           >
