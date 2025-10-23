@@ -58,6 +58,7 @@ export default function CardBillPage() {
 
   useEffect(() => {
     fetchBillData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.cardId, selectedMonth]);
 
   const fetchBillData = async () => {
@@ -148,12 +149,15 @@ export default function CardBillPage() {
                 <CreditCard className="h-6 w-6" />
                 <h2 className="text-xl font-bold">{billData.card.name}</h2>
               </div>
-              <div className="flex items-center gap-4 text-sm opacity-90">
+              <div className="flex flex-col gap-1 text-sm opacity-90">
                 <div className="flex items-center gap-1">
                   <Calendar className="h-4 w-4" />
                   <span>
-                    {formatDate(billData.period.start)} - {formatDate(billData.period.end)}
+                    Período: {formatDate(billData.period.start)} - {formatDate(billData.period.end)}
                   </span>
+                </div>
+                <div className="text-xs opacity-75">
+                  💡 Compras após {formatDate(billData.period.end)} vão para a próxima fatura
                 </div>
                 <div>Vencimento: dia {billData.card.dueDay}</div>
               </div>

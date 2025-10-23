@@ -34,32 +34,39 @@ export async function GET(request: Request, { params }: { params: { cardId: stri
     }
 
     // Calcular período da fatura baseado no dia de fechamento
+    // Lógica: Compras feitas APÓS o dia de fechamento vão para a PRÓXIMA fatura
+    // Exemplo: Se fecha dia 4
+    // - Compra dia 4 às 23:59 = fatura atual
+    // - Compra dia 5 às 00:00 = próxima fatura
     let startDate: Date;
     let endDate: Date;
 
     if (month) {
       const [year, monthNum] = month.split("-").map(Number);
-      // Período de fechamento: do dia X do mês anterior até o dia X-1 do mês atual
-      startDate = new Date(year, monthNum - 2, card.closingDay + 1);
-      endDate = new Date(year, monthNum - 1, card.closingDay);
-      endDate.setHours(23, 59, 59, 999);
+      // Período de fechamento: do dia (X+1) do mês anterior até o dia X do mês solicitado
+      // Fatura de outubro (mês 10): de 05/set até 04/out 23:59:59
+      startDate = new Date(year, monthNum - 2, card.closingDay + 1, 0, 0, 0, 0);
+      endDate = new Date(year, monthNum - 1, card.closingDay, 23, 59, 59, 999);
     } else {
-      // Fatura atual: do último fechamento até o próximo
+      // Fatura atual: determinar qual mês de vencimento baseado na data atual
       const now = new Date();
-      const currentMonth = now.getMonth();
+      const currentMonth = now.getMonth(); // 0-11
       const currentYear = now.getFullYear();
       const currentDay = now.getDate();
 
+      // Se hoje é DIA 4 ou ANTES do dia 4, a fatura atual vence este mês
+      // Se hoje é DEPOIS do dia 4, a fatura atual vence no próximo mês
       if (currentDay <= card.closingDay) {
-        // Ainda estamos na fatura do mês passado
-        startDate = new Date(currentYear, currentMonth - 1, card.closingDay + 1);
-        endDate = new Date(currentYear, currentMonth, card.closingDay);
+        // Ainda estamos na fatura que vence este mês
+        // Período: dia (X+1) do mês passado até dia X deste mês
+        startDate = new Date(currentYear, currentMonth - 1, card.closingDay + 1, 0, 0, 0, 0);
+        endDate = new Date(currentYear, currentMonth, card.closingDay, 23, 59, 59, 999);
       } else {
-        // Já estamos na fatura do próximo mês
-        startDate = new Date(currentYear, currentMonth, card.closingDay + 1);
-        endDate = new Date(currentYear, currentMonth + 1, card.closingDay);
+        // Já passamos do fechamento, estamos na fatura do próximo mês
+        // Período: dia (X+1) deste mês até dia X do próximo mês
+        startDate = new Date(currentYear, currentMonth, card.closingDay + 1, 0, 0, 0, 0);
+        endDate = new Date(currentYear, currentMonth + 1, card.closingDay, 23, 59, 59, 999);
       }
-      endDate.setHours(23, 59, 59, 999);
     }
 
     // Buscar transações do período

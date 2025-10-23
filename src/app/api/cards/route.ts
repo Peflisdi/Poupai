@@ -28,25 +28,58 @@ export async function GET(request: Request) {
       where: {
         userId: user.id,
       },
-      include: {
-        transactions: includeTransactions
-          ? {
-              where: {
-                date: {
-                  // Últimos 30 dias por padrão
-                  gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
-                },
-              },
-              orderBy: {
-                date: "desc",
-              },
-            }
-          : false,
-      },
       orderBy: {
         name: "asc",
       },
     });
+
+    // Se incluir transações, buscar as transações do período da fatura atual de cada cartão
+    if (includeTransactions) {
+      const now = new Date();
+      const currentMonth = now.getMonth();
+      const currentYear = now.getFullYear();
+      const currentDay = now.getDate();
+
+      const cardsWithTransactions = await Promise.all(
+        cards.map(async (card) => {
+          // Calcular período da fatura atual
+          let startDate: Date;
+          let endDate: Date;
+
+          if (currentDay <= card.closingDay) {
+            // Fatura que vence este mês
+            startDate = new Date(currentYear, currentMonth - 1, card.closingDay + 1, 0, 0, 0, 0);
+            endDate = new Date(currentYear, currentMonth, card.closingDay, 23, 59, 59, 999);
+          } else {
+            // Fatura que vence próximo mês
+            startDate = new Date(currentYear, currentMonth, card.closingDay + 1, 0, 0, 0, 0);
+            endDate = new Date(currentYear, currentMonth + 1, card.closingDay, 23, 59, 59, 999);
+          }
+
+          // Buscar transações do período
+          const transactions = await prisma.transaction.findMany({
+            where: {
+              cardId: card.id,
+              userId: user.id,
+              date: {
+                gte: startDate,
+                lte: endDate,
+              },
+            },
+            orderBy: {
+              date: "desc",
+            },
+          });
+
+          return {
+            ...card,
+            transactions,
+          };
+        })
+      );
+
+      return NextResponse.json(cardsWithTransactions);
+    }
 
     return NextResponse.json(cards);
   } catch (error) {

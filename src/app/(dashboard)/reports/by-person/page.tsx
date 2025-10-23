@@ -5,6 +5,7 @@ import { Users, TrendingUp, DollarSign, AlertCircle, CheckCircle, Download } fro
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { showToast } from "@/lib/toast";
+import { formatCurrency } from "@/lib/utils";
 
 interface PersonReport {
   personName: string;
@@ -183,10 +184,7 @@ export default function ReportsByPersonPage() {
             </span>
           </div>
           <p className="text-2xl font-bold text-neutral-900 dark:text-white">
-            R${" "}
-            {reportData.summary.totalAmount.toLocaleString("pt-BR", {
-              minimumFractionDigits: 2,
-            })}
+            {formatCurrency(reportData.summary.totalAmount)}
           </p>
         </div>
 
@@ -198,10 +196,7 @@ export default function ReportsByPersonPage() {
             </span>
           </div>
           <p className="text-2xl font-bold text-orange-600">
-            R${" "}
-            {reportData.summary.totalPending.toLocaleString("pt-BR", {
-              minimumFractionDigits: 2,
-            })}
+            {formatCurrency(reportData.summary.totalPending)}
           </p>
         </div>
 
@@ -213,10 +208,7 @@ export default function ReportsByPersonPage() {
             </span>
           </div>
           <p className="text-2xl font-bold text-green-600">
-            R${" "}
-            {reportData.summary.totalReimbursed.toLocaleString("pt-BR", {
-              minimumFractionDigits: 2,
-            })}
+            {formatCurrency(reportData.summary.totalReimbursed)}
           </p>
         </div>
       </div>
@@ -251,27 +243,18 @@ export default function ReportsByPersonPage() {
                     <div className="flex items-center gap-4 text-sm text-neutral-600 dark:text-neutral-400">
                       <span>{person.transactionCount} transações</span>
                       <span>•</span>
-                      <span>
-                        Total: R${" "}
-                        {person.total.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
-                      </span>
+                      <span>Total: {formatCurrency(person.total)}</span>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
                     {person.totalPending > 0 && (
                       <span className="px-3 py-1 rounded-full text-sm font-semibold text-orange-600 bg-orange-50 dark:bg-orange-900/20">
-                        Deve: R${" "}
-                        {person.totalPending.toLocaleString("pt-BR", {
-                          minimumFractionDigits: 2,
-                        })}
+                        Deve: {formatCurrency(person.totalPending)}
                       </span>
                     )}
                     {person.totalReimbursed > 0 && (
                       <span className="px-3 py-1 rounded-full text-sm font-semibold text-green-600 bg-green-50 dark:bg-green-900/20">
-                        Pago: R${" "}
-                        {person.totalReimbursed.toLocaleString("pt-BR", {
-                          minimumFractionDigits: 2,
-                        })}
+                        Pago: {formatCurrency(person.totalReimbursed)}
                       </span>
                     )}
                   </div>
@@ -322,10 +305,7 @@ export default function ReportsByPersonPage() {
                         </div>
                         <div className="flex items-center gap-3">
                           <span className="font-semibold text-neutral-900 dark:text-white">
-                            R${" "}
-                            {transaction.amount.toLocaleString("pt-BR", {
-                              minimumFractionDigits: 2,
-                            })}
+                            {formatCurrency(transaction.amount)}
                           </span>
                           {transaction.isReimbursed ? (
                             <CheckCircle className="h-4 w-4 text-green-600" />

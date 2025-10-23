@@ -10,6 +10,7 @@ import { showToast, toastMessages } from "@/lib/toast";
 import { useConfirm } from "@/hooks/useConfirm";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { CreditCardSkeleton } from "@/components/ui/Skeleton";
+import { formatCurrency } from "@/lib/utils";
 
 export default function CardsPage() {
   const { confirm, isOpen, options, onConfirm, onCancel } = useConfirm();
@@ -170,25 +171,23 @@ export default function CardsPage() {
           <div className="bg-background-secondary rounded-lg p-6 border border-border-primary">
             <p className="text-sm text-text-secondary mb-1">Limite Total</p>
             <p className="text-2xl font-bold text-text-primary">
-              R$ {cards.reduce((sum, card) => sum + card.limit, 0).toFixed(2)}
+              {formatCurrency(cards.reduce((sum, card) => sum + card.limit, 0))}
             </p>
           </div>
           <div className="bg-background-secondary rounded-lg p-6 border border-border-primary">
             <p className="text-sm text-text-secondary mb-1">Fatura Total</p>
             <p className="text-2xl font-bold text-red-600 dark:text-red-400">
-              R${" "}
-              {cards
-                .reduce((sum, card) => sum + cardService.calculateCurrentBill(card), 0)
-                .toFixed(2)}
+              {formatCurrency(
+                cards.reduce((sum, card) => sum + cardService.calculateCurrentBill(card), 0)
+              )}
             </p>
           </div>
           <div className="bg-background-secondary rounded-lg p-6 border border-border-primary">
             <p className="text-sm text-text-secondary mb-1">Disponível Total</p>
             <p className="text-2xl font-bold text-green-600 dark:text-green-400">
-              R${" "}
-              {cards
-                .reduce((sum, card) => sum + cardService.calculateAvailableLimit(card), 0)
-                .toFixed(2)}
+              {formatCurrency(
+                cards.reduce((sum, card) => sum + cardService.calculateAvailableLimit(card), 0)
+              )}
             </p>
           </div>
         </div>
