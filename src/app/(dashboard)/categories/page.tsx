@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Plus, Layers, TrendingUp, AlertTriangle } from "lucide-react";
 import { useCategories } from "@/hooks/useCategories";
 import { categoryService } from "@/services/categoryService";
@@ -18,13 +18,28 @@ export default function CategoriesPage() {
   const { categories, isLoading, refetch } = useCategories();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [categorySpending, setCategorySpending] = useState<Record<string, number>>({});
+  const [isLoadingSpending, setIsLoadingSpending] = useState(true);
 
-  // Calcular gastos por categoria (simplificado - no real você pegaria do banco)
-  const categorySpending = useMemo(() => {
-    // Aqui você faria um fetch para pegar os gastos reais
-    // Por enquanto retornando um objeto vazio
-    return {};
-  }, []);
+  // Buscar gastos por categoria
+  useEffect(() => {
+    const fetchSpending = async () => {
+      try {
+        setIsLoadingSpending(true);
+        const response = await fetch("/api/categories/spending");
+        if (response.ok) {
+          const data = await response.json();
+          setCategorySpending(data);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar gastos por categoria:", error);
+      } finally {
+        setIsLoadingSpending(false);
+      }
+    };
+
+    fetchSpending();
+  }, [categories]); // Re-buscar quando categorias mudarem
 
   const handleCreateCategory = () => {
     setEditingCategory(null);
@@ -210,7 +225,7 @@ export default function CategoriesPage() {
               category={category}
               onEdit={handleEditCategory}
               onDelete={handleDeleteCategory}
-              spent={0} // Aqui você passaria o valor real gasto
+              spent={categorySpending[category.id] || 0}
             />
           ))}
         </div>
@@ -255,7 +270,7 @@ export default function CategoriesPage() {
                     category={category}
                     onEdit={handleEditCategory}
                     onDelete={handleDeleteCategory}
-                    spent={0}
+                    spent={categorySpending[category.id] || 0}
                   />
                 </div>
               );

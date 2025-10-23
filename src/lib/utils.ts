@@ -20,6 +20,7 @@ export function formatDate(date: Date | string, format: "short" | "long" = "shor
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
+      timeZone: "America/Sao_Paulo", // Usar timezone do Brasil
     }).format(dateObj);
   }
 
@@ -27,6 +28,7 @@ export function formatDate(date: Date | string, format: "short" | "long" = "shor
     day: "2-digit",
     month: "long",
     year: "numeric",
+    timeZone: "America/Sao_Paulo", // Usar timezone do Brasil
   }).format(dateObj);
 }
 

@@ -234,7 +234,7 @@ export function TransactionModal({
                   className={`p-3 rounded-lg border-2 transition-all ${
                     formData.type === "INCOME"
                       ? "border-green-500 bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400"
-                      : "border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:border-neutral-700"
+                      : "border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600"
                   }`}
                 >
                   <span className="text-sm font-semibold">Receita</span>
@@ -245,7 +245,7 @@ export function TransactionModal({
                   className={`p-3 rounded-lg border-2 transition-all ${
                     formData.type === "EXPENSE"
                       ? "border-red-500 bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400"
-                      : "border-neutral-200 dark:border-neutral-800 hover:border-neutral-300 dark:border-neutral-700"
+                      : "border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600"
                   }`}
                 >
                   <span className="text-sm font-semibold">Despesa</span>
@@ -295,7 +295,19 @@ export function TransactionModal({
               <Input
                 type="date"
                 value={formData.date.toISOString().split("T")[0]}
-                onChange={(e) => setFormData({ ...formData, date: new Date(e.target.value) })}
+                onChange={(e) => {
+                  // Criar data sem conversão de timezone
+                  const [year, month, day] = e.target.value.split("-");
+                  const localDate = new Date(
+                    parseInt(year),
+                    parseInt(month) - 1,
+                    parseInt(day),
+                    12,
+                    0,
+                    0
+                  );
+                  setFormData({ ...formData, date: localDate });
+                }}
                 onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
                 required
                 className={hasError("Data") ? "border-red-500 dark:border-red-500" : ""}

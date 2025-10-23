@@ -30,10 +30,16 @@ export const transactionService = {
 
   // POST create transaction
   async create(data: TransactionFormData): Promise<Transaction> {
+    // Garantir que a data seja enviada no formato ISO mas preservando o dia local
+    const formattedData = {
+      ...data,
+      date: data.date instanceof Date ? data.date.toISOString() : data.date,
+    };
+
     const response = await fetch("/api/transactions", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify(formattedData),
     });
 
     if (!response.ok) {
@@ -47,10 +53,16 @@ export const transactionService = {
 
   // PUT update transaction
   async update(id: string, data: Partial<TransactionFormData>): Promise<Transaction> {
+    // Garantir que a data seja enviada no formato ISO mas preservando o dia local
+    const formattedData = {
+      ...data,
+      date: data.date instanceof Date ? data.date.toISOString() : data.date,
+    };
+
     const response = await fetch(`/api/transactions/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify(formattedData),
     });
 
     if (!response.ok) {
