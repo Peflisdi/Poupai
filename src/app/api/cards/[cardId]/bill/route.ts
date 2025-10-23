@@ -36,18 +36,18 @@ export async function GET(request: Request, { params }: { params: { cardId: stri
     // ===== LÓGICA DE PERÍODO DA FATURA =====
     //
     // Conceitos:
-    // - closingDay (dia de fechamento): Último dia para compras entrarem na fatura
+    // - closingDay (dia de fechamento): DIA que fecha - compras neste dia JÁ vão para próxima fatura
     // - dueDay (dia de vencimento): Dia de pagamento da fatura
     //
     // Exemplo: Cartão fecha dia 4, vence dia 10
     //
     // Fatura com VENCIMENTO em OUTUBRO (10/out):
-    //   → Período de compras: 05/set até 04/out
-    //   → Compras feitas até 04/out aparecem nesta fatura
+    //   → Período de compras: 04/set até 03/out
+    //   → Compras feitas até 03/out (um dia antes do fechamento) aparecem nesta fatura
     //
     // Fatura com VENCIMENTO em NOVEMBRO (10/nov):
-    //   → Período de compras: 05/out até 04/nov
-    //   → Compras feitas a partir de 05/out aparecem nesta fatura
+    //   → Período de compras: 04/out até 03/nov
+    //   → Compras feitas A PARTIR de 04/out (dia do fechamento) aparecem nesta fatura
     //
     let startDate: Date;
     let endDate: Date;
@@ -57,9 +57,9 @@ export async function GET(request: Request, { params }: { params: { cardId: stri
       const [year, monthNum] = month.split("-").map(Number);
 
       // Fatura que vence em outubro:
-      // Período: 05/setembro até 04/outubro
-      startDate = new Date(year, monthNum - 2, card.closingDay + 1, 0, 0, 0, 0);
-      endDate = new Date(year, monthNum - 1, card.closingDay, 23, 59, 59, 999);
+      // Período: 04/setembro até 03/outubro (um dia antes do fechamento)
+      startDate = new Date(year, monthNum - 2, card.closingDay, 0, 0, 0, 0);
+      endDate = new Date(year, monthNum - 1, card.closingDay - 1, 23, 59, 59, 999);
     } else {
       // Buscar fatura ATUAL (não foi especificado mês)
       const now = new Date();
@@ -68,18 +68,18 @@ export async function GET(request: Request, { params }: { params: { cardId: stri
       const currentDay = now.getDate();
 
       // Determinar qual fatura estamos
-      if (currentDay <= card.closingDay) {
-        // Ainda não fechou a fatura deste mês
+      if (currentDay < card.closingDay) {
+        // Ainda não chegou no dia de fechamento deste mês
         // Ex: Hoje é 02/out, fecha dia 4 → Fatura vence em outubro
-        // Período: 05/set até 04/out
-        startDate = new Date(currentYear, currentMonth - 1, card.closingDay + 1, 0, 0, 0, 0);
-        endDate = new Date(currentYear, currentMonth, card.closingDay, 23, 59, 59, 999);
+        // Período: 04/set até 03/out
+        startDate = new Date(currentYear, currentMonth - 1, card.closingDay, 0, 0, 0, 0);
+        endDate = new Date(currentYear, currentMonth, card.closingDay - 1, 23, 59, 59, 999);
       } else {
-        // Já fechou a fatura deste mês
-        // Ex: Hoje é 23/out, fecha dia 4 → Fatura vence em novembro
-        // Período: 05/out até 04/nov
-        startDate = new Date(currentYear, currentMonth, card.closingDay + 1, 0, 0, 0, 0);
-        endDate = new Date(currentYear, currentMonth + 1, card.closingDay, 23, 59, 59, 999);
+        // Já chegou no dia de fechamento (ou passou)
+        // Ex: Hoje é 04/out ou 23/out, fecha dia 4 → Fatura vence em novembro
+        // Período: 04/out até 03/nov
+        startDate = new Date(currentYear, currentMonth, card.closingDay, 0, 0, 0, 0);
+        endDate = new Date(currentYear, currentMonth + 1, card.closingDay - 1, 23, 59, 59, 999);
       }
     }
 

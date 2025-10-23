@@ -43,19 +43,20 @@ export async function GET(request: Request) {
       const cardsWithTransactions = await Promise.all(
         cards.map(async (card) => {
           // ===== CALCULAR PERÍODO DA FATURA ATUAL =====
+          // Compras NO DIA de fechamento já vão para próxima fatura
           let startDate: Date;
           let endDate: Date;
 
-          if (currentDay <= card.closingDay) {
-            // Ainda não fechou este mês
-            // Fatura vence este mês, período do mês anterior até hoje
-            startDate = new Date(currentYear, currentMonth - 1, card.closingDay + 1, 0, 0, 0, 0);
-            endDate = new Date(currentYear, currentMonth, card.closingDay, 23, 59, 59, 999);
+          if (currentDay < card.closingDay) {
+            // Ainda não chegou no dia de fechamento
+            // Fatura vence este mês, período: dia X do mês passado até dia (X-1) deste mês
+            startDate = new Date(currentYear, currentMonth - 1, card.closingDay, 0, 0, 0, 0);
+            endDate = new Date(currentYear, currentMonth, card.closingDay - 1, 23, 59, 59, 999);
           } else {
-            // Já fechou este mês
-            // Fatura vence próximo mês, período deste mês até mês seguinte
-            startDate = new Date(currentYear, currentMonth, card.closingDay + 1, 0, 0, 0, 0);
-            endDate = new Date(currentYear, currentMonth + 1, card.closingDay, 23, 59, 59, 999);
+            // Já chegou no dia de fechamento (ou passou)
+            // Fatura vence próximo mês, período: dia X deste mês até dia (X-1) do próximo mês
+            startDate = new Date(currentYear, currentMonth, card.closingDay, 0, 0, 0, 0);
+            endDate = new Date(currentYear, currentMonth + 1, card.closingDay - 1, 23, 59, 59, 999);
           }
 
           // Buscar transações do período

@@ -214,15 +214,9 @@ export default function ReportsByPersonPage() {
       </div>
 
       {/* People List */}
-      <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800">
-        <div className="p-6 border-b border-neutral-200 dark:border-neutral-800">
-          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">
-            Detalhamento por Pessoa
-          </h2>
-        </div>
-
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {reportData.report.length === 0 ? (
-          <div className="p-12 text-center">
+          <div className="col-span-full bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-12 text-center">
             <Users className="h-16 w-16 mx-auto mb-4 text-neutral-300 dark:text-neutral-700" />
             <h3 className="text-lg font-semibold text-neutral-900 dark:text-white mb-2">
               Nenhuma transação encontrada
@@ -232,94 +226,125 @@ export default function ReportsByPersonPage() {
             </p>
           </div>
         ) : (
-          <div className="divide-y divide-neutral-200 dark:divide-neutral-800">
-            {reportData.report.map((person) => (
-              <div key={person.personName} className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-neutral-900 dark:text-white mb-1">
+          reportData.report.map((person) => (
+            <div
+              key={person.personName}
+              className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-6 hover:shadow-lg transition-shadow"
+            >
+              {/* Header do Card */}
+              <div className="flex items-start justify-between mb-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg">
+                      {person.personName.charAt(0).toUpperCase()}
+                    </div>
+                    <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
                       {person.personName}
                     </h3>
-                    <div className="flex items-center gap-4 text-sm text-neutral-600 dark:text-neutral-400">
-                      <span>{person.transactionCount} transações</span>
-                      <span>•</span>
-                      <span>Total: {formatCurrency(person.total)}</span>
-                    </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    {person.totalPending > 0 && (
-                      <span className="px-3 py-1 rounded-full text-sm font-semibold text-orange-600 bg-orange-50 dark:bg-orange-900/20">
-                        Deve: {formatCurrency(person.totalPending)}
-                      </span>
-                    )}
-                    {person.totalReimbursed > 0 && (
-                      <span className="px-3 py-1 rounded-full text-sm font-semibold text-green-600 bg-green-50 dark:bg-green-900/20">
-                        Pago: {formatCurrency(person.totalReimbursed)}
-                      </span>
-                    )}
-                  </div>
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                    {person.transactionCount} transação{person.transactionCount !== 1 ? "ões" : ""}
+                  </p>
+                </div>
+              </div>
+
+              {/* Valores */}
+              <div className="space-y-3 mb-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-neutral-600 dark:text-neutral-400">Total</span>
+                  <span className="text-xl font-bold text-neutral-900 dark:text-white">
+                    {formatCurrency(person.total)}
+                  </span>
                 </div>
 
-                {/* Progress Bar */}
-                <div className="mb-4">
-                  <div className="h-2 bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden">
-                    <div
-                      className="h-full bg-green-500 transition-all"
-                      style={{
-                        width: `${(person.totalReimbursed / person.total) * 100}%`,
-                      }}
-                    />
+                {person.totalPending > 0 && (
+                  <div className="flex items-center justify-between p-3 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                    <span className="text-sm font-medium text-orange-600 dark:text-orange-400">
+                      Pendente
+                    </span>
+                    <span className="text-base font-semibold text-orange-600 dark:text-orange-400">
+                      {formatCurrency(person.totalPending)}
+                    </span>
                   </div>
-                </div>
+                )}
 
-                {/* Transactions Toggle */}
-                <button
-                  onClick={() =>
-                    setExpandedPerson(
-                      expandedPerson === person.personName ? null : person.personName
-                    )
-                  }
-                  className="text-sm text-blue-600 hover:text-blue-700 font-medium"
-                >
-                  {expandedPerson === person.personName ? "Ocultar" : "Ver"} transações
-                </button>
-
-                {/* Transactions List */}
-                {expandedPerson === person.personName && (
-                  <div className="mt-4 space-y-2 pl-4 border-l-2 border-neutral-200 dark:border-neutral-800">
-                    {person.transactions.map((transaction: any) => (
-                      <div
-                        key={transaction.id}
-                        className="flex items-center justify-between text-sm"
-                      >
-                        <div className="flex-1">
-                          <p className="font-medium text-neutral-900 dark:text-white">
-                            {transaction.description}
-                          </p>
-                          <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                            {new Date(transaction.date).toLocaleDateString("pt-BR")}
-                            {transaction.category &&
-                              ` • ${transaction.category.icon} ${transaction.category.name}`}
-                            {transaction.card && ` • 💳 ${transaction.card.name}`}
-                          </p>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="font-semibold text-neutral-900 dark:text-white">
-                            {formatCurrency(transaction.amount)}
-                          </span>
-                          {transaction.isReimbursed ? (
-                            <CheckCircle className="h-4 w-4 text-green-600" />
-                          ) : (
-                            <AlertCircle className="h-4 w-4 text-orange-600" />
-                          )}
-                        </div>
-                      </div>
-                    ))}
+                {person.totalReimbursed > 0 && (
+                  <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <span className="text-sm font-medium text-green-600 dark:text-green-400">
+                      Reembolsado
+                    </span>
+                    <span className="text-base font-semibold text-green-600 dark:text-green-400">
+                      {formatCurrency(person.totalReimbursed)}
+                    </span>
                   </div>
                 )}
               </div>
-            ))}
-          </div>
+
+              {/* Progress Bar */}
+              <div className="mb-4">
+                <div className="flex items-center justify-between text-xs text-neutral-600 dark:text-neutral-400 mb-1">
+                  <span>Progresso de Reembolso</span>
+                  <span>{((person.totalReimbursed / person.total) * 100).toFixed(0)}%</span>
+                </div>
+                <div className="h-2 bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-green-500 to-green-600 transition-all"
+                    style={{
+                      width: `${(person.totalReimbursed / person.total) * 100}%`,
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* Botão Ver Detalhes */}
+              <button
+                onClick={() =>
+                  setExpandedPerson(expandedPerson === person.personName ? null : person.personName)
+                }
+                className="w-full mt-2 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 py-2.5 px-4 rounded-lg hover:opacity-90 transition-opacity font-medium flex items-center justify-center gap-2"
+              >
+                <Users className="h-4 w-4" />
+                <span>{expandedPerson === person.personName ? "Ocultar" : "Ver"} Detalhes</span>
+              </button>
+
+              {/* Lista de Transações Expandida */}
+              {expandedPerson === person.personName && (
+                <div className="mt-4 pt-4 border-t border-neutral-200 dark:border-neutral-800 space-y-2">
+                  <h4 className="text-sm font-semibold text-neutral-900 dark:text-white mb-3">
+                    Transações:
+                  </h4>
+                  {person.transactions.map((transaction: any) => (
+                    <div
+                      key={transaction.id}
+                      className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg"
+                    >
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <p className="font-medium text-neutral-900 dark:text-white truncate">
+                            {transaction.description}
+                          </p>
+                          {transaction.isReimbursed ? (
+                            <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+                          ) : (
+                            <AlertCircle className="h-4 w-4 text-orange-600 flex-shrink-0" />
+                          )}
+                        </div>
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                          {new Date(transaction.date).toLocaleDateString("pt-BR")}
+                          {transaction.category &&
+                            ` • ${transaction.category.icon} ${transaction.category.name}`}
+                          {transaction.card && ` • 💳 ${transaction.card.name}`}
+                        </p>
+                      </div>
+                      <span className="font-semibold text-neutral-900 dark:text-white ml-3">
+                        {formatCurrency(transaction.amount)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))
         )}
       </div>
     </div>
