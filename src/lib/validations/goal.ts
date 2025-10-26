@@ -4,10 +4,7 @@ import { z } from "zod";
  * Schema de validação para metas financeiras
  */
 export const goalSchema = z.object({
-  name: z
-    .string()
-    .min(1, "Nome é obrigatório")
-    .max(100, "Nome muito longo"),
+  name: z.string().min(1, "Nome é obrigatório").max(100, "Nome muito longo"),
   targetAmount: z
     .number({
       required_error: "Valor alvo é obrigatório",

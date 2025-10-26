@@ -4,15 +4,8 @@ import { z } from "zod";
  * Schema de validação para cartões de crédito
  */
 export const cardSchema = z.object({
-  name: z
-    .string()
-    .min(1, "Nome é obrigatório")
-    .max(100, "Nome muito longo"),
-  nickname: z
-    .string()
-    .max(100, "Apelido muito longo")
-    .optional()
-    .nullable(),
+  name: z.string().min(1, "Nome é obrigatório").max(100, "Nome muito longo"),
+  nickname: z.string().max(100, "Apelido muito longo").optional().nullable(),
   limit: z
     .number({
       required_error: "Limite é obrigatório",

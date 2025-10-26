@@ -5,10 +5,7 @@ import { z } from "zod";
  * Usado tanto no cliente quanto no servidor para garantir consistência
  */
 export const transactionSchema = z.object({
-  description: z
-    .string()
-    .min(1, "Descrição é obrigatória")
-    .max(255, "Descrição muito longa"),
+  description: z.string().min(1, "Descrição é obrigatória").max(255, "Descrição muito longa"),
   amount: z
     .number({
       required_error: "Valor é obrigatório",

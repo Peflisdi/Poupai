@@ -11,7 +11,10 @@ import { FormSelect } from "@/components/ui/FormSelect";
 import { FormCheckbox } from "@/components/ui/FormCheckbox";
 import { useCards } from "@/hooks/useCards";
 import { showToast } from "@/lib/toast";
-import { createTransactionSchema, type CreateTransactionInput } from "@/lib/validations/transaction";
+import {
+  createTransactionSchema,
+  type CreateTransactionInput,
+} from "@/lib/validations/transaction";
 
 interface TransactionModalProps {
   isOpen: boolean;
@@ -86,10 +89,8 @@ export function TransactionModal({
 
   const onSubmit = async (data: CreateTransactionInput) => {
     try {
-      const endpoint = transaction
-        ? `/api/transactions/${transaction.id}`
-        : "/api/transactions";
-      
+      const endpoint = transaction ? `/api/transactions/${transaction.id}` : "/api/transactions";
+
       const method = transaction ? "PUT" : "POST";
 
       const response = await fetch(endpoint, {
@@ -109,7 +110,7 @@ export function TransactionModal({
       showToast.success(
         transaction ? "Transação atualizada com sucesso!" : "Transação criada com sucesso!"
       );
-      
+
       await onSave();
       onClose();
       reset();
@@ -183,8 +184,8 @@ export function TransactionModal({
             <FormInput
               label="Data"
               type="date"
-              {...register("date", { 
-                setValueAs: (value) => value ? new Date(value + "T12:00:00") : new Date() 
+              {...register("date", {
+                setValueAs: (value) => (value ? new Date(value + "T12:00:00") : new Date()),
               })}
               error={errors.date}
               required

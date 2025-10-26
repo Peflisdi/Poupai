@@ -4,10 +4,7 @@ import { z } from "zod";
  * Schema de validação para categorias
  */
 export const categorySchema = z.object({
-  name: z
-    .string()
-    .min(1, "Nome é obrigatório")
-    .max(100, "Nome muito longo"),
+  name: z.string().min(1, "Nome é obrigatório").max(100, "Nome muito longo"),
   icon: z
     .string()
     .min(1, "Ícone é obrigatório")

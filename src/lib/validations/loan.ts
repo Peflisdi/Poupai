@@ -4,10 +4,7 @@ import { z } from "zod";
  * Schema de validação para empréstimos
  */
 export const loanSchema = z.object({
-  description: z
-    .string()
-    .min(1, "Descrição é obrigatória")
-    .max(255, "Descrição muito longa"),
+  description: z.string().min(1, "Descrição é obrigatória").max(255, "Descrição muito longa"),
   amount: z
     .number({
       required_error: "Valor é obrigatório",
@@ -19,10 +16,7 @@ export const loanSchema = z.object({
     required_error: "Tipo é obrigatório",
     invalid_type_error: "Tipo deve ser LENT ou BORROWED",
   }),
-  personName: z
-    .string()
-    .min(1, "Nome da pessoa é obrigatório")
-    .max(100, "Nome muito longo"),
+  personName: z.string().min(1, "Nome da pessoa é obrigatório").max(100, "Nome muito longo"),
   date: z.date({
     required_error: "Data é obrigatória",
     invalid_type_error: "Data inválida",
