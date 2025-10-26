@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { createTransactionSchema } from "@/lib/validations/transaction";
 
 export async function GET(request: NextRequest) {
   try {
@@ -96,43 +97,43 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const {
-      type,
-      description,
-      amount,
-      date,
-      categoryId,
-      paymentMethod,
-      cardId,
-      isRecurring,
-      recurringPeriod,
-      note,
-      paidBy,
-      isReimbursed,
-    } = body;
 
-    // Validate required fields
-    if (!type || !description || !amount || !date) {
-      return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+    // Validar com Zod
+    const validationResult = createTransactionSchema.safeParse({
+      ...body,
+      date: body.date ? new Date(body.date) : undefined,
+    });
+
+    if (!validationResult.success) {
+      return NextResponse.json(
+        {
+          error: "Validation failed",
+          details: validationResult.error.flatten().fieldErrors,
+        },
+        { status: 400 }
+      );
     }
+
+    const data = validationResult.data;
 
     const transaction = await prisma.transaction.create({
       data: {
         userId: user.id,
-        type,
-        description,
-        amount: parseFloat(amount),
-        date: new Date(date),
-        categoryId: categoryId || null,
-        paymentMethod: paymentMethod || "CASH",
-        cardId: cardId || null,
-        isRecurring: isRecurring || false,
-        recurringPeriod: recurringPeriod || null,
-        paidBy: paidBy || null,
-        isReimbursed: isReimbursed || false,
+        type: data.type,
+        description: data.description,
+        amount: data.amount,
+        date: data.date,
+        categoryId: data.categoryId || null,
+        paymentMethod: "CASH", // Default, pode ser adicionado ao schema depois
+        cardId: data.cardId || null,
+        isRecurring: false, // Default, pode ser adicionado ao schema depois
+        recurringPeriod: null,
+        paidBy: data.paidBy || null,
+        isReimbursed: data.isReimbursed,
       },
       include: {
         category: true,
+        card: true,
       },
     });
 
