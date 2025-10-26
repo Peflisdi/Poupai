@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getCurrentBillPeriod, getBillPeriodByMonth } from "@/lib/cardUtils";
 
 // GET /api/cards/[cardId]/bill - Buscar detalhes da fatura do cartão
 export async function GET(request: Request, { params }: { params: { cardId: string } }) {
@@ -35,19 +36,24 @@ export async function GET(request: Request, { params }: { params: { cardId: stri
 
     // ===== LÓGICA DE PERÍODO DA FATURA =====
     //
+    // Agora considera finais de semana!
+    //
     // Conceitos:
-    // - closingDay (dia de fechamento): DIA que fecha - compras neste dia JÁ vão para próxima fatura
+    // - closingDay (dia de fechamento): DIA configurado no cartão
+    // - Fechamento efetivo: Ajustado para próxima segunda se cair em fim de semana
     // - dueDay (dia de vencimento): Dia de pagamento da fatura
     //
-    // Exemplo: Cartão fecha dia 4, vence dia 10
+    // Exemplo 1: Cartão fecha dia 4 (quinta-feira), vence dia 10
+    //   Fatura com VENCIMENTO em OUTUBRO (10/out):
+    //     → Período: 04/set (quinta) até 03/out (quarta) 23:59:59
+    //     → Compras até 03/out aparecem nesta fatura
     //
-    // Fatura com VENCIMENTO em OUTUBRO (10/out):
-    //   → Período de compras: 04/set até 03/out
-    //   → Compras feitas até 03/out (um dia antes do fechamento) aparecem nesta fatura
-    //
-    // Fatura com VENCIMENTO em NOVEMBRO (10/nov):
-    //   → Período de compras: 04/out até 03/nov
-    //   → Compras feitas A PARTIR de 04/out (dia do fechamento) aparecem nesta fatura
+    // Exemplo 2: Cartão fecha dia 1 (domingo), vence dia 7
+    //   - Fechamento EFETIVO é dia 2 (segunda-feira, primeiro dia útil)
+    //   Fatura com VENCIMENTO em OUTUBRO (07/out):
+    //     → Período: 02/set (segunda) até 01/out (domingo) 23:59:59
+    //     → Compras feitas no domingo (01/out) ainda vão para esta fatura
+    //     → Compras processadas na segunda (02/out) vão para PRÓXIMA fatura
     //
     let startDate: Date;
     let endDate: Date;
@@ -55,32 +61,17 @@ export async function GET(request: Request, { params }: { params: { cardId: stri
     if (month) {
       // Usuário selecionou um mês específico (ex: "2025-10" = outubro)
       const [year, monthNum] = month.split("-").map(Number);
-
-      // Fatura que vence em outubro:
-      // Período: 04/setembro até 03/outubro (um dia antes do fechamento)
-      startDate = new Date(year, monthNum - 2, card.closingDay, 0, 0, 0, 0);
-      endDate = new Date(year, monthNum - 1, card.closingDay - 1, 23, 59, 59, 999);
+      
+      // Usar função que considera finais de semana
+      const period = getBillPeriodByMonth(card.closingDay, year, monthNum);
+      startDate = period.startDate;
+      endDate = period.endDate;
     } else {
       // Buscar fatura ATUAL (não foi especificado mês)
-      const now = new Date();
-      const currentMonth = now.getMonth(); // 0-11 (0=Jan, 9=Out)
-      const currentYear = now.getFullYear();
-      const currentDay = now.getDate();
-
-      // Determinar qual fatura estamos
-      if (currentDay < card.closingDay) {
-        // Ainda não chegou no dia de fechamento deste mês
-        // Ex: Hoje é 02/out, fecha dia 4 → Fatura vence em outubro
-        // Período: 04/set até 03/out
-        startDate = new Date(currentYear, currentMonth - 1, card.closingDay, 0, 0, 0, 0);
-        endDate = new Date(currentYear, currentMonth, card.closingDay - 1, 23, 59, 59, 999);
-      } else {
-        // Já chegou no dia de fechamento (ou passou)
-        // Ex: Hoje é 04/out ou 23/out, fecha dia 4 → Fatura vence em novembro
-        // Período: 04/out até 03/nov
-        startDate = new Date(currentYear, currentMonth, card.closingDay, 0, 0, 0, 0);
-        endDate = new Date(currentYear, currentMonth + 1, card.closingDay - 1, 23, 59, 59, 999);
-      }
+      // Usar função que considera finais de semana
+      const period = getCurrentBillPeriod(card.closingDay);
+      startDate = period.startDate;
+      endDate = period.endDate;
     }
 
     // Buscar transações do período
