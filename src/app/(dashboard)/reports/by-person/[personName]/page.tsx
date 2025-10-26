@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Calendar, Users, TrendingDown, CheckCircle, AlertCircle } from "lucide-react";
+import { ArrowLeft, Calendar, Users, TrendingDown, CheckCircle, AlertCircle, Download } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { showToast } from "@/lib/toast";
+import { generatePersonExpensesPDF } from "@/utils/pdfGenerator";
 
 interface CategoryData {
   id: string;
@@ -93,6 +94,18 @@ export default function PersonDetailPage() {
     return date.toLocaleDateString("pt-BR", { day: "2-digit", month: "short" });
   };
 
+  const handleExportPDF = () => {
+    if (!detailData) return;
+    
+    try {
+      generatePersonExpensesPDF(detailData);
+      showToast.success("PDF gerado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+      showToast.error("Erro ao gerar PDF. Tente novamente.");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background-primary p-6">
@@ -137,14 +150,25 @@ export default function PersonDetailPage() {
             </div>
           </div>
 
-          {/* Seletor de mês */}
-          <input
-            type="month"
-            value={selectedMonth}
-            onChange={(e) => setSelectedMonth(e.target.value)}
-            onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
-            className="px-4 py-2 bg-background-secondary border border-border-primary rounded-lg text-text-primary focus:outline-none focus:border-primary cursor-pointer"
-          />
+          <div className="flex items-center gap-3">
+            {/* Botão Exportar PDF */}
+            <button
+              onClick={handleExportPDF}
+              className="flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+            >
+              <Download className="h-4 w-4" />
+              <span>Exportar PDF</span>
+            </button>
+
+            {/* Seletor de mês */}
+            <input
+              type="month"
+              value={selectedMonth}
+              onChange={(e) => setSelectedMonth(e.target.value)}
+              onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
+              className="px-4 py-2 bg-background-secondary border border-border-primary rounded-lg text-text-primary focus:outline-none focus:border-primary cursor-pointer"
+            />
+          </div>
         </div>
 
         {/* Card da Pessoa com Período */}

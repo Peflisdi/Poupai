@@ -9,12 +9,14 @@ import {
   CheckCircle,
   Download,
   Receipt,
+  FileText,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { showToast } from "@/lib/toast";
 import { formatCurrency } from "@/lib/utils";
 import { useRouter } from "next/navigation";
+import { generateAllPeopleExpensesPDF } from "@/utils/pdfGenerator";
 
 interface PersonReport {
   personName: string;
@@ -108,6 +110,46 @@ export default function ReportsByPersonPage() {
     window.URL.revokeObjectURL(url);
   };
 
+  const handleExportAllPDF = async () => {
+    if (!reportData || reportData.report.length === 0) {
+      showToast.warning("Nenhum dado para exportar");
+      return;
+    }
+
+    try {
+      showToast.loading("Gerando PDF...");
+
+      // Para cada pessoa, buscar os detalhes completos com categorias
+      const peopleDetails = await Promise.all(
+        reportData.report.map(async (person) => {
+          try {
+            const res = await fetch(
+              `/api/reports/by-person/detail?personName=${encodeURIComponent(person.personName)}`
+            );
+            if (!res.ok) throw new Error("Erro ao buscar detalhes");
+            return await res.json();
+          } catch (error) {
+            console.error(`Erro ao buscar dados de ${person.personName}:`, error);
+            return null;
+          }
+        })
+      );
+
+      const validDetails = peopleDetails.filter(Boolean);
+      
+      if (validDetails.length === 0) {
+        showToast.error("Erro ao buscar dados para exportação");
+        return;
+      }
+
+      generateAllPeopleExpensesPDF(validDetails);
+      showToast.success("PDF consolidado gerado com sucesso!");
+    } catch (error) {
+      console.error("Erro ao gerar PDF:", error);
+      showToast.error("Erro ao gerar PDF. Tente novamente.");
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -165,7 +207,10 @@ export default function ReportsByPersonPage() {
             <Button onClick={fetchReport} variant="primary" className="flex-1">
               Filtrar
             </Button>
-            <Button onClick={exportToCSV} variant="secondary">
+            <Button onClick={handleExportAllPDF} variant="secondary" title="Exportar PDF Consolidado">
+              <FileText className="h-4 w-4" />
+            </Button>
+            <Button onClick={exportToCSV} variant="secondary" title="Exportar CSV">
               <Download className="h-4 w-4" />
             </Button>
           </div>
