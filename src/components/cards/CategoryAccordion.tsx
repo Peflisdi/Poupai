@@ -28,10 +28,18 @@ interface CategoryAccordionProps {
 }
 
 export function CategoryAccordion({ categories }: CategoryAccordionProps) {
-  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
 
   const toggleCategory = (id: string) => {
-    setExpandedId(expandedId === id ? null : id);
+    setExpandedIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+      return newSet;
+    });
   };
 
   const formatDate = (dateString: Date | string) => {
@@ -105,13 +113,13 @@ export function CategoryAccordion({ categories }: CategoryAccordionProps) {
               {/* Ícone de expansão */}
               <ChevronDown
                 className={`h-5 w-5 text-text-secondary transition-transform ml-3 ${
-                  expandedId === category.id ? "rotate-180" : ""
+                  expandedIds.has(category.id) ? "rotate-180" : ""
                 }`}
               />
             </button>
 
             {/* Conteúdo expandido - Lista de transações */}
-            {expandedId === category.id && (
+            {expandedIds.has(category.id) && (
               <div className="border-t border-border-primary bg-background-secondary">
                 {category.transactions.length === 0 ? (
                   <p className="text-text-secondary text-center py-4 text-sm">

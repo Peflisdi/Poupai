@@ -1,11 +1,20 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Users, TrendingUp, DollarSign, AlertCircle, CheckCircle, Download } from "lucide-react";
+import {
+  Users,
+  TrendingUp,
+  DollarSign,
+  AlertCircle,
+  CheckCircle,
+  Download,
+  Receipt,
+} from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { showToast } from "@/lib/toast";
 import { formatCurrency } from "@/lib/utils";
+import { useRouter } from "next/navigation";
 
 interface PersonReport {
   personName: string;
@@ -29,6 +38,7 @@ interface ReportData {
 }
 
 export default function ReportsByPersonPage() {
+  const router = useRouter();
   const [reportData, setReportData] = useState<ReportData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [expandedPerson, setExpandedPerson] = useState<string | null>(null);
@@ -299,21 +309,31 @@ export default function ReportsByPersonPage() {
               {/* Botão Ver Detalhes */}
               <button
                 onClick={() =>
-                  setExpandedPerson(expandedPerson === person.personName ? null : person.personName)
+                  router.push(`/reports/by-person/${encodeURIComponent(person.personName)}`)
                 }
                 className="w-full mt-2 bg-neutral-900 dark:bg-white text-white dark:text-neutral-900 py-2.5 px-4 rounded-lg hover:opacity-90 transition-opacity font-medium flex items-center justify-center gap-2"
               >
-                <Users className="h-4 w-4" />
-                <span>{expandedPerson === person.personName ? "Ocultar" : "Ver"} Detalhes</span>
+                <Receipt className="h-4 w-4" />
+                <span>Ver Detalhes</span>
               </button>
 
-              {/* Lista de Transações Expandida */}
+              {/* Botão de Preview Rápido */}
+              <button
+                onClick={() =>
+                  setExpandedPerson(expandedPerson === person.personName ? null : person.personName)
+                }
+                className="w-full mt-2 bg-neutral-100 dark:bg-neutral-800 text-neutral-900 dark:text-white py-2 px-4 rounded-lg hover:bg-neutral-200 dark:hover:bg-neutral-700 transition-colors font-medium text-sm"
+              >
+                {expandedPerson === person.personName ? "Ocultar Preview" : "Ver Preview Rápido"}
+              </button>
+
+              {/* Lista de Transações Expandida - Preview */}
               {expandedPerson === person.personName && (
                 <div className="mt-4 pt-4 border-t border-neutral-200 dark:border-neutral-800 space-y-2">
                   <h4 className="text-sm font-semibold text-neutral-900 dark:text-white mb-3">
-                    Transações:
+                    Preview (últimas 3 transações):
                   </h4>
-                  {person.transactions.map((transaction: any) => (
+                  {person.transactions.slice(0, 3).map((transaction: any) => (
                     <div
                       key={transaction.id}
                       className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-neutral-800 rounded-lg"
@@ -341,6 +361,12 @@ export default function ReportsByPersonPage() {
                       </span>
                     </div>
                   ))}
+                  {person.transactions.length > 3 && (
+                    <p className="text-xs text-center text-neutral-500 dark:text-neutral-400 pt-2">
+                      +{person.transactions.length - 3} transações. Clique em &quot;Ver
+                      Detalhes&quot; para ver todas
+                    </p>
+                  )}
                 </div>
               )}
             </div>
