@@ -156,21 +156,25 @@ export function TransactionModal({
   const filteredCategories = categories;
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-background-secondary rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black/70 backdrop-blur-md flex items-center justify-center z-50 p-4">
+      <div className="bg-white dark:bg-neutral-900 rounded-xl shadow-2xl border border-neutral-200 dark:border-neutral-800 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-border-primary">
+        <div className="flex items-center justify-between p-6 border-b border-neutral-200 dark:border-neutral-800">
           <div>
-            <h2 className="text-xl font-semibold text-text-primary">
+            <h2 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
               {transaction ? "Editar Transação" : "Nova Transação"}
             </h2>
-            {isInstallment && <p className="text-sm text-text-secondary mt-1">{installmentInfo}</p>}
+            {isInstallment && (
+              <p className="text-sm text-neutral-600 dark:text-neutral-400 mt-1">
+                {installmentInfo}
+              </p>
+            )}
           </div>
           <button
             onClick={handleClose}
-            className="p-2 hover:bg-background-tertiary rounded-lg transition-colors"
+            className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
           >
-            <X className="h-5 w-5 text-text-secondary" />
+            <X className="h-5 w-5 text-neutral-600 dark:text-neutral-400" />
           </button>
         </div>
 
