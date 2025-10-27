@@ -9,7 +9,8 @@ import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
 import { TransactionTable } from "@/components/transactions/TransactionTable";
 import { TransactionFilters } from "@/components/transactions/TransactionFilters";
-import { TransactionModal } from "@/components/transactions/TransactionModal";
+import { TransactionModal } from "@/components/transactions/TransactionModal"; // Modal antigo para criar
+import { TransactionModal as TransactionModalEdit } from "@/components/transactions/TransactionModalNew"; // Modal novo para editar
 import { Transaction, TransactionFormData } from "@/types";
 import { showToast, toastMessages } from "@/lib/toast";
 import { useConfirm } from "@/hooks/useConfirm";
@@ -146,6 +147,11 @@ function TransactionsContent() {
       console.error("Erro ao salvar transação:", error);
       alert("Erro ao salvar transação. Tente novamente.");
     }
+  };
+
+  const handleSaveAfterEdit = async () => {
+    // Callback do modal de edição (novo)
+    await refetch();
   };
 
   const handleDeleteTransaction = async (id: string) => {
@@ -443,14 +449,28 @@ function TransactionsContent() {
         </div>
       </div>
 
-      {/* Modal */}
-      <TransactionModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSave={handleSaveTransaction}
-        transaction={editingTransaction}
-        categories={categories || []}
-      />
+      {/* Modais */}
+      {/* Modal para CRIAR (antigo - com parcelamento) */}
+      {!editingTransaction && (
+        <TransactionModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSave={handleSaveTransaction}
+          transaction={null}
+          categories={categories || []}
+        />
+      )}
+
+      {/* Modal para EDITAR (novo - com checkbox de parcelas) */}
+      {editingTransaction && (
+        <TransactionModalEdit
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          onSave={handleSaveAfterEdit}
+          transaction={editingTransaction}
+          categories={categories || []}
+        />
+      )}
 
       {/* Confirm Dialog */}
       <ConfirmDialog

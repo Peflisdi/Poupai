@@ -15,8 +15,17 @@ export async function POST(request: Request) {
     console.log("Criando compra parcelada para userId:", session.user.id);
 
     const body = await request.json();
-    const { description, totalAmount, installments, startDate, categoryId, cardId, paymentMethod } =
-      body;
+    const { 
+      description, 
+      totalAmount, 
+      installments, 
+      startDate, 
+      categoryId, 
+      cardId, 
+      paymentMethod,
+      paidBy,           // Adicionar paidBy
+      isReimbursed      // Adicionar isReimbursed
+    } = body;
 
     // Validações
     if (!description || !totalAmount || !installments || !startDate) {
@@ -108,6 +117,8 @@ export async function POST(request: Request) {
         cardId: cardId || null,
         installmentPurchaseId: installmentPurchase.id,
         installmentNumber: i + 1,
+        paidBy: paidBy || null,              // Adicionar paidBy
+        isReimbursed: isReimbursed || false, // Adicionar isReimbursed
       });
     }
 
