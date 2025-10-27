@@ -61,7 +61,7 @@ export async function GET(request: Request, { params }: { params: { cardId: stri
     if (month) {
       // Usuário selecionou um mês específico (ex: "2025-10" = outubro)
       const [year, monthNum] = month.split("-").map(Number);
-      
+
       // Usar função que considera finais de semana
       const period = getBillPeriodByMonth(card.closingDay, year, monthNum);
       startDate = period.startDate;

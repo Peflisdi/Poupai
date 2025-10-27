@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X } from "lucide-react";
+import { X, AlertCircle } from "lucide-react";
 import { Transaction, Category } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { FormInput } from "@/components/ui/FormInput";
@@ -32,6 +32,7 @@ export function TransactionModal({
   categories,
 }: TransactionModalProps) {
   const { cards } = useCards();
+  const [updateAllInstallments, setUpdateAllInstallments] = useState(false);
 
   const {
     register,
@@ -56,6 +57,12 @@ export function TransactionModal({
 
   const type = watch("type");
   const cardId = watch("cardId");
+
+  // Verificar se a transação é parcelada
+  const isInstallment = transaction?.installmentPurchaseId != null;
+  const installmentInfo = isInstallment
+    ? `Parcela ${transaction?.installmentNumber || 1} de ${transaction?.installmentPurchase?.installments || 1}`
+    : null;
 
   // Reset form when modal opens/closes or transaction changes
   useEffect(() => {
@@ -99,6 +106,7 @@ export function TransactionModal({
         body: JSON.stringify({
           ...data,
           date: data.date.toISOString(),
+          updateAllInstallments: isInstallment && updateAllInstallments, // Flag para atualizar todas as parcelas
         }),
       });
 
@@ -107,13 +115,21 @@ export function TransactionModal({
         throw new Error(error.details ? JSON.stringify(error.details) : error.error);
       }
 
-      showToast.success(
-        transaction ? "Transação atualizada com sucesso!" : "Transação criada com sucesso!"
-      );
+      const result = await response.json();
+
+      // Mensagem personalizada se atualizou múltiplas parcelas
+      if (result.updatedCount && result.updatedCount > 1) {
+        showToast.success(`${result.updatedCount} parcelas atualizadas com sucesso!`);
+      } else {
+        showToast.success(
+          transaction ? "Transação atualizada com sucesso!" : "Transação criada com sucesso!"
+        );
+      }
 
       await onSave();
       onClose();
       reset();
+      setUpdateAllInstallments(false);
     } catch (error) {
       console.error("Erro ao salvar transação:", error);
       showToast.error("Erro ao salvar transação");
@@ -122,6 +138,7 @@ export function TransactionModal({
 
   const handleClose = () => {
     reset();
+    setUpdateAllInstallments(false);
     onClose();
   };
 
@@ -135,9 +152,16 @@ export function TransactionModal({
       <div className="bg-background-secondary rounded-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-border-primary">
-          <h2 className="text-xl font-semibold text-text-primary">
-            {transaction ? "Editar Transação" : "Nova Transação"}
-          </h2>
+          <div>
+            <h2 className="text-xl font-semibold text-text-primary">
+              {transaction ? "Editar Transação" : "Nova Transação"}
+            </h2>
+            {isInstallment && (
+              <p className="text-sm text-text-secondary mt-1">
+                {installmentInfo}
+              </p>
+            )}
+          </div>
           <button
             onClick={handleClose}
             className="p-2 hover:bg-background-tertiary rounded-lg transition-colors"
@@ -145,6 +169,36 @@ export function TransactionModal({
             <X className="h-5 w-5 text-text-secondary" />
           </button>
         </div>
+
+        {/* Alerta de Parcela */}
+        {isInstallment && transaction && (
+          <div className="mx-6 mt-6 p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+            <div className="flex gap-3">
+              <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+                  Esta é uma compra parcelada
+                </h3>
+                <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                  Você está editando apenas esta parcela ({transaction.installmentNumber} de{" "}
+                  {transaction.installmentPurchase?.installments}). Deseja aplicar as alterações
+                  para todas as parcelas?
+                </p>
+                <label className="flex items-center gap-2 mt-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={updateAllInstallments}
+                    onChange={(e) => setUpdateAllInstallments(e.target.checked)}
+                    className="w-4 h-4 rounded border-blue-300 dark:border-blue-700 text-blue-600 focus:ring-2 focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                    Atualizar todas as {transaction.installmentPurchase?.installments} parcelas
+                  </span>
+                </label>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Form */}
         <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-4">

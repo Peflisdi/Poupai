@@ -101,13 +101,23 @@ export function generatePersonExpensesPDF(data: PersonExpenseData): void {
 
   doc.setFontSize(10);
   doc.setFont("helvetica", "normal");
-  doc.text(`Período: ${formatDate(data.period.start)} - ${formatDate(data.period.end)}`, 15, yPosition);
+  doc.text(
+    `Período: ${formatDate(data.period.start)} - ${formatDate(data.period.end)}`,
+    15,
+    yPosition
+  );
 
   yPosition += 5;
   doc.text(`Total de Transações: ${data.transactionCount}`, 15, yPosition);
 
   yPosition += 5;
-  doc.text(`Gerado em: ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR")}`, 15, yPosition);
+  doc.text(
+    `Gerado em: ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString(
+      "pt-BR"
+    )}`,
+    15,
+    yPosition
+  );
 
   yPosition += 15;
 
@@ -293,18 +303,10 @@ export function generatePersonExpensesPDF(data: PersonExpenseData): void {
     doc.setPage(i);
     doc.setFontSize(8);
     doc.setTextColor(...secondaryColor);
-    doc.text(
-      `Página ${i} de ${totalPages}`,
-      pageWidth / 2,
-      pageHeight - 10,
-      { align: "center" }
-    );
-    doc.text(
-      "Gerado por Poupai - Sistema de Gestão Financeira",
-      pageWidth / 2,
-      pageHeight - 5,
-      { align: "center" }
-    );
+    doc.text(`Página ${i} de ${totalPages}`, pageWidth / 2, pageHeight - 10, { align: "center" });
+    doc.text("Gerado por Poupai - Sistema de Gestão Financeira", pageWidth / 2, pageHeight - 5, {
+      align: "center",
+    });
   }
 
   // ====================
@@ -313,7 +315,7 @@ export function generatePersonExpensesPDF(data: PersonExpenseData): void {
   const fileName = `gastos-${data.personName.toLowerCase().replace(/\s+/g, "-")}-${
     new Date().toISOString().split("T")[0]
   }.pdf`;
-  
+
   doc.save(fileName);
 }
 
@@ -324,7 +326,7 @@ export function generateAllPeopleExpensesPDF(peopleData: PersonExpenseData[]): v
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
   const pageHeight = doc.internal.pageSize.getHeight();
-  
+
   const primaryColor: [number, number, number] = [79, 70, 229];
   const secondaryColor: [number, number, number] = [100, 100, 100];
 
@@ -400,7 +402,9 @@ export function generateAllPeopleExpensesPDF(peopleData: PersonExpenseData[]): v
   doc.setFontSize(8);
   doc.setTextColor(...secondaryColor);
   doc.text(
-    `Gerado em: ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString("pt-BR")}`,
+    `Gerado em: ${new Date().toLocaleDateString("pt-BR")} às ${new Date().toLocaleTimeString(
+      "pt-BR"
+    )}`,
     pageWidth / 2,
     pageHeight - 10,
     { align: "center" }

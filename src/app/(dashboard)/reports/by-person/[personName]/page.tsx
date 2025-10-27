@@ -2,7 +2,15 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowLeft, Calendar, Users, TrendingDown, CheckCircle, AlertCircle, Download } from "lucide-react";
+import {
+  ArrowLeft,
+  Calendar,
+  Users,
+  TrendingDown,
+  CheckCircle,
+  AlertCircle,
+  Download,
+} from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { showToast } from "@/lib/toast";
 import { generatePersonExpensesPDF } from "@/utils/pdfGenerator";
@@ -96,7 +104,7 @@ export default function PersonDetailPage() {
 
   const handleExportPDF = () => {
     if (!detailData) return;
-    
+
     try {
       generatePersonExpensesPDF(detailData);
       showToast.success("PDF gerado com sucesso!");

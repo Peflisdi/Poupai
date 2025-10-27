@@ -136,7 +136,7 @@ export default function ReportsByPersonPage() {
       );
 
       const validDetails = peopleDetails.filter(Boolean);
-      
+
       if (validDetails.length === 0) {
         showToast.error("Erro ao buscar dados para exportação");
         return;
@@ -207,7 +207,11 @@ export default function ReportsByPersonPage() {
             <Button onClick={fetchReport} variant="primary" className="flex-1">
               Filtrar
             </Button>
-            <Button onClick={handleExportAllPDF} variant="secondary" title="Exportar PDF Consolidado">
+            <Button
+              onClick={handleExportAllPDF}
+              variant="secondary"
+              title="Exportar PDF Consolidado"
+            >
               <FileText className="h-4 w-4" />
             </Button>
             <Button onClick={exportToCSV} variant="secondary" title="Exportar CSV">
