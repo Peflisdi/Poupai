@@ -32,7 +32,12 @@ export function TransactionModal({
   categories,
 }: TransactionModalProps) {
   const { cards } = useCards();
-  const [updateAllInstallments, setUpdateAllInstallments] = useState(false);
+  
+  // Verificar se é parcela
+  const isInstallment = transaction?.installmentPurchaseId != null;
+  
+  // Checkbox MARCADO por padrão para parcelas (comportamento esperado)
+  const [updateAllInstallments, setUpdateAllInstallments] = useState(isInstallment);
 
   const {
     register,
@@ -58,15 +63,18 @@ export function TransactionModal({
   const type = watch("type");
   const cardId = watch("cardId");
 
-  // Verificar se a transação é parcelada
-  const isInstallment = transaction?.installmentPurchaseId != null;
   const installmentInfo = isInstallment
-    ? `Parcela ${transaction?.installmentNumber || 1} de ${transaction?.installmentPurchase?.installments || 1}`
+    ? `Parcela ${transaction?.installmentNumber || 1} de ${
+        transaction?.installmentPurchase?.installments || 1
+      }`
     : null;
 
   // Reset form when modal opens/closes or transaction changes
   useEffect(() => {
     if (isOpen) {
+      // Atualizar checkbox baseado se é parcela ou não
+      setUpdateAllInstallments(isInstallment);
+      
       if (transaction) {
         const transactionType = transaction.type === "TRANSFER" ? "EXPENSE" : transaction.type;
         reset({
@@ -92,7 +100,7 @@ export function TransactionModal({
         });
       }
     }
-  }, [isOpen, transaction, categories, reset]);
+  }, [isOpen, transaction, categories, reset, isInstallment]);
 
   const onSubmit = async (data: CreateTransactionInput) => {
     try {
@@ -156,11 +164,7 @@ export function TransactionModal({
             <h2 className="text-xl font-semibold text-text-primary">
               {transaction ? "Editar Transação" : "Nova Transação"}
             </h2>
-            {isInstallment && (
-              <p className="text-sm text-text-secondary mt-1">
-                {installmentInfo}
-              </p>
-            )}
+            {isInstallment && <p className="text-sm text-text-secondary mt-1">{installmentInfo}</p>}
           </div>
           <button
             onClick={handleClose}
@@ -177,12 +181,14 @@ export function TransactionModal({
               <AlertCircle className="h-5 w-5 text-blue-600 dark:text-blue-400 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
                 <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
-                  Esta é uma compra parcelada
+                  ⚠️ Esta é uma compra parcelada
                 </h3>
                 <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
-                  Você está editando apenas esta parcela ({transaction.installmentNumber} de{" "}
-                  {transaction.installmentPurchase?.installments}). Deseja aplicar as alterações
-                  para todas as parcelas?
+                  As parcelas são um <strong>grupo único</strong>. Por padrão, alterações serão
+                  aplicadas em <strong>todas as {transaction.installmentPurchase?.installments} parcelas</strong>.
+                </p>
+                <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                  💡 Exemplo: Se você mudar a categoria ou quem pagou, todas as parcelas serão atualizadas juntas.
                 </p>
                 <label className="flex items-center gap-2 mt-3 cursor-pointer">
                   <input
@@ -192,9 +198,12 @@ export function TransactionModal({
                     className="w-4 h-4 rounded border-blue-300 dark:border-blue-700 text-blue-600 focus:ring-2 focus:ring-blue-500"
                   />
                   <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                    Atualizar todas as {transaction.installmentPurchase?.installments} parcelas
+                    Atualizar todas as {transaction.installmentPurchase?.installments} parcelas (recomendado)
                   </span>
                 </label>
+                <p className="text-xs text-blue-600 dark:text-blue-400 mt-2 ml-6">
+                  Desmarque apenas se quiser editar somente esta parcela específica.
+                </p>
               </div>
             </div>
           </div>
