@@ -47,7 +47,7 @@ export async function GET(request: Request) {
 
     // Filtrar por período considerando o ciclo de faturamento do cartão
     let filteredTransactions = transactions;
-    
+
     if (startDate || endDate) {
       const start = startDate ? new Date(startDate) : null;
       const end = endDate ? new Date(endDate) : null;
@@ -57,14 +57,14 @@ export async function GET(request: Request) {
         if (transaction.cardId && transaction.card) {
           const transDate = new Date(transaction.date);
           const closingDay = transaction.card.closingDay;
-          
+
           // Determinar o mês/ano da fatura (não da compra)
           // Se a compra é antes do fechamento do mês atual, vai para a fatura deste mês
           // Se é depois do fechamento, vai para a fatura do próximo mês
-          
+
           let billYear = transDate.getFullYear();
           let billMonth = transDate.getMonth() + 1; // 1-12
-          
+
           // Se a compra foi após o dia de fechamento deste mês, vai para a próxima fatura
           if (transDate.getDate() >= closingDay) {
             billMonth += 1;
@@ -73,19 +73,19 @@ export async function GET(request: Request) {
               billYear += 1;
             }
           }
-          
+
           // Criar uma data representando o mês da fatura (dia 1 do mês)
           const billMonthDate = new Date(billYear, billMonth - 1, 1);
-          
+
           if (start && billMonthDate < start) return false;
           if (end && billMonthDate > end) return false;
-          
+
           return true;
         } else {
           // Para transações normais, usar a data da transação
           if (start && transaction.date < start) return false;
           if (end && transaction.date > end) return false;
-          
+
           return true;
         }
       });

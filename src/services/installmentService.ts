@@ -7,8 +7,8 @@ export interface CreateInstallmentData {
   categoryId?: string;
   cardId?: string;
   paymentMethod?: string;
-  paidBy?: string | null;      // Adicionar paidBy
-  isReimbursed?: boolean;       // Adicionar isReimbursed
+  paidBy?: string | null; // Adicionar paidBy
+  isReimbursed?: boolean; // Adicionar isReimbursed
 }
 
 export interface InstallmentPurchase {

@@ -156,22 +156,22 @@ function TransactionsContent() {
 
   const handleDeleteTransaction = async (id: string) => {
     const transaction = transactions.find((t) => t.id === id);
-    
+
     // Verificar se é uma compra parcelada
     const isInstallment = transaction?.installmentPurchaseId != null;
     const installmentCount = transaction?.installmentPurchase?.installments || 1;
-    
+
     let confirmMessage = `Tem certeza que deseja deletar a transação "${
       transaction?.description || "sem descrição"
     }"? Esta ação não pode ser desfeita.`;
-    
+
     // Se é parcela, avisar que TODAS serão deletadas
     if (isInstallment) {
       confirmMessage = `⚠️ Esta é uma compra parcelada!\n\nVocê está prestes a deletar TODAS as ${installmentCount} parcelas de "${
         transaction?.description || "sem descrição"
       }".\n\nEsta ação não pode ser desfeita. Deseja continuar?`;
     }
-    
+
     const confirmed = await confirm({
       title: isInstallment ? "Deletar Todas as Parcelas" : "Deletar Transação",
       message: confirmMessage,
@@ -185,12 +185,9 @@ function TransactionsContent() {
     try {
       if (isInstallment && transaction?.installmentPurchaseId) {
         // Deletar TODAS as transações do grupo de parcelas
-        const response = await fetch(
-          `/api/installments/${transaction.installmentPurchaseId}`,
-          {
-            method: "DELETE",
-          }
-        );
+        const response = await fetch(`/api/installments/${transaction.installmentPurchaseId}`, {
+          method: "DELETE",
+        });
 
         if (!response.ok) {
           throw new Error("Erro ao deletar parcelas");
@@ -202,7 +199,7 @@ function TransactionsContent() {
         await transactionService.delete(id);
         showToast.success(toastMessages.transactions.deleted);
       }
-      
+
       refetch();
     } catch (error) {
       console.error("Erro ao deletar transação:", error);

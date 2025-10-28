@@ -8,7 +8,7 @@ function getBillMonth(transactionDate: Date, closingDay: number): Date {
   const transDay = transactionDate.getDate();
   let billMonth = transactionDate.getMonth();
   let billYear = transactionDate.getFullYear();
-  
+
   // Se a compra foi após o dia de fechamento, vai para a próxima fatura
   if (transDay >= closingDay) {
     billMonth += 1;
@@ -17,7 +17,7 @@ function getBillMonth(transactionDate: Date, closingDay: number): Date {
       billYear += 1;
     }
   }
-  
+
   return new Date(billYear, billMonth, 1);
 }
 
@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
       if (transaction.cardId && transaction.card) {
         // Para transações de cartão, calcular qual fatura vai aparecer
         const billMonth = getBillMonth(new Date(transaction.date), transaction.card.closingDay);
-        
+
         // Verificar se a fatura está no período selecionado
         return billMonth >= startDate && billMonth <= endDate;
       } else {
@@ -115,7 +115,10 @@ export async function GET(req: NextRequest) {
 
     cardTransactions.forEach((transaction) => {
       const billMonth = getBillMonth(new Date(transaction.date), transaction.card!.closingDay);
-      const billMonthStr = `${billMonth.getFullYear()}-${String(billMonth.getMonth() + 1).padStart(2, "0")}`;
+      const billMonthStr = `${billMonth.getFullYear()}-${String(billMonth.getMonth() + 1).padStart(
+        2,
+        "0"
+      )}`;
       const key = `${transaction.cardId}-${billMonthStr}`;
 
       if (!cardBillsMap.has(key)) {
@@ -142,7 +145,7 @@ export async function GET(req: NextRequest) {
     });
 
     // Converter faturas de cartão para array
-    const cardBills = Array.from(cardBillsMap.values()).sort((a, b) => 
+    const cardBills = Array.from(cardBillsMap.values()).sort((a, b) =>
       b.billMonth.localeCompare(a.billMonth)
     );
 

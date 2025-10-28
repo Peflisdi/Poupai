@@ -159,7 +159,7 @@ export function TransactionModal({
           categoryId: formData.categoryId,
           cardId: formData.cardId,
           paymentMethod: formData.paymentMethod,
-          paidBy: formData.paidBy,           // Adicionar paidBy
+          paidBy: formData.paidBy, // Adicionar paidBy
           isReimbursed: formData.isReimbursed, // Adicionar isReimbursed
         });
         showToast.success(`Compra parcelada em ${installments}x criada com sucesso!`);

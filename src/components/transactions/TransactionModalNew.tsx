@@ -32,10 +32,10 @@ export function TransactionModal({
   categories,
 }: TransactionModalProps) {
   const { cards } = useCards();
-  
+
   // Verificar se é parcela
   const isInstallment = transaction?.installmentPurchaseId != null;
-  
+
   // Checkbox MARCADO por padrão para parcelas (comportamento esperado)
   const [updateAllInstallments, setUpdateAllInstallments] = useState(isInstallment);
 
@@ -74,7 +74,7 @@ export function TransactionModal({
     if (isOpen) {
       // Atualizar checkbox baseado se é parcela ou não
       setUpdateAllInstallments(isInstallment);
-      
+
       if (transaction) {
         const transactionType = transaction.type === "TRANSFER" ? "EXPENSE" : transaction.type;
         reset({
@@ -189,10 +189,13 @@ export function TransactionModal({
                 </h3>
                 <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
                   As parcelas são um <strong>grupo único</strong>. Por padrão, alterações serão
-                  aplicadas em <strong>todas as {transaction.installmentPurchase?.installments} parcelas</strong>.
+                  aplicadas em{" "}
+                  <strong>todas as {transaction.installmentPurchase?.installments} parcelas</strong>
+                  .
                 </p>
                 <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-                  💡 Exemplo: Se você mudar a categoria ou quem pagou, todas as parcelas serão atualizadas juntas.
+                  💡 Exemplo: Se você mudar a categoria ou quem pagou, todas as parcelas serão
+                  atualizadas juntas.
                 </p>
                 <label className="flex items-center gap-2 mt-3 cursor-pointer">
                   <input
@@ -202,7 +205,8 @@ export function TransactionModal({
                     className="w-4 h-4 rounded border-blue-300 dark:border-blue-700 text-blue-600 focus:ring-2 focus:ring-blue-500"
                   />
                   <span className="text-sm font-medium text-blue-900 dark:text-blue-100">
-                    Atualizar todas as {transaction.installmentPurchase?.installments} parcelas (recomendado)
+                    Atualizar todas as {transaction.installmentPurchase?.installments} parcelas
+                    (recomendado)
                   </span>
                 </label>
                 <p className="text-xs text-blue-600 dark:text-blue-400 mt-2 ml-6">
