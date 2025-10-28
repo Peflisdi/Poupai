@@ -7,6 +7,11 @@ interface Transaction {
   amount: number;
   date: Date | string;
   isReimbursed: boolean;
+  category?: {
+    name: string;
+    icon: string;
+    color: string;
+  };
   card?: {
     name: string;
     color: string;
@@ -22,6 +27,58 @@ interface CategoryData {
   transactions: Transaction[];
 }
 
+interface CardBill {
+  cardName: string;
+  cardColor: string;
+  closingDay: number;
+  billMonth: string;
+  transactions: Array<{
+    id: string;
+    description: string | null;
+    amount: number;
+    date: Date | string;
+    isReimbursed: boolean;
+    category?: {
+      name: string;
+      icon: string;
+      color: string;
+    };
+  }>;
+  total: number;
+}
+
+interface DirectTransaction {
+  id: string;
+  description: string | null;
+  amount: number;
+  date: Date | string;
+  isReimbursed: boolean;
+  category?: {
+    name: string;
+    icon: string;
+    color: string;
+  };
+}
+
+interface LoanData {
+  id: string;
+  type: string;
+  description: string | null;
+  totalAmount: number;
+  paidAmount: number;
+  remainingAmount: number;
+  installments: number;
+  dueDate: Date | string | null;
+  status: string;
+  createdAt: Date | string;
+  payments: Array<{
+    id: string;
+    amount: number;
+    date: Date | string;
+    notes: string | null;
+  }>;
+}
+
 interface PersonExpenseData {
   personName: string;
   period: {
@@ -33,7 +90,45 @@ interface PersonExpenseData {
   totalReimbursed: number;
   transactionCount: number;
   categories: CategoryData[];
+  // Novos campos
+  cardBills?: CardBill[];
+  directTransactions?: DirectTransaction[];
+  totalCard?: number;
+  totalDirect?: number;
+  // Empréstimos
+  loans?: LoanData[];
+  totalLoans?: number;
+  totalLoansPaid?: number;
+  totalLoansRemaining?: number;
 }
+
+/**
+ * Remove emojis e caracteres especiais que não são suportados pelo PDF
+ * Mantém apenas texto ASCII e caracteres latinos básicos
+ */
+const sanitizeText = (text: string): string => {
+  // Remove emojis e símbolos especiais, mantém apenas texto
+  return text
+    .replace(/[\u{1F300}-\u{1F9FF}]/gu, "") // Remove emojis
+    .replace(/[\u{2600}-\u{26FF}]/gu, "") // Remove símbolos diversos
+    .replace(/[\u{2700}-\u{27BF}]/gu, "") // Remove dingbats
+    .replace(/[\u{FE00}-\u{FE0F}]/gu, "") // Remove seletores de variação
+    .replace(/\s+/g, " ") // Normaliza espaços
+    .trim();
+};
+
+/**
+ * Retorna um ícone textual baseado no tipo
+ */
+const getTextIcon = (type: "card" | "pix" | "pending" | "paid"): string => {
+  const icons = {
+    card: "[Cartao]",
+    pix: "[PIX]",
+    pending: "[Pendente]",
+    paid: "[Pago]",
+  };
+  return icons[type];
+};
 
 /**
  * Formata valor em moeda brasileira
@@ -58,7 +153,7 @@ const formatDate = (dateString: string): string => {
 };
 
 /**
- * Gera PDF com relatório de gastos de uma pessoa
+ * Gera PDF com relatório de gastos de uma pessoa (agrupado por método de pagamento)
  */
 export function generatePersonExpensesPDF(data: PersonExpenseData): void {
   const doc = new jsPDF();
@@ -67,7 +162,7 @@ export function generatePersonExpensesPDF(data: PersonExpenseData): void {
   let yPosition = 20;
 
   // Cores
-  const primaryColor: [number, number, number] = [79, 70, 229]; // Indigo
+  const primaryColor: [number, number, number] = [147, 51, 234]; // Purple
   const secondaryColor: [number, number, number] = [100, 100, 100];
   const successColor: [number, number, number] = [16, 185, 129]; // Green
   const warningColor: [number, number, number] = [245, 158, 11]; // Orange
@@ -85,7 +180,7 @@ export function generatePersonExpensesPDF(data: PersonExpenseData): void {
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "normal");
-  doc.text("Relatório de Gastos por Pessoa", 15, 25);
+  doc.text("Relatorio de Gastos por Pessoa", 15, 25);
 
   yPosition = 45;
 
@@ -178,51 +273,7 @@ export function generatePersonExpensesPDF(data: PersonExpenseData): void {
   yPosition += 50;
 
   // ====================
-  // GASTOS POR CATEGORIA
-  // ====================
-  doc.setTextColor(0, 0, 0);
-  doc.setFontSize(14);
-  doc.setFont("helvetica", "bold");
-  doc.text("Gastos por Categoria", 15, yPosition);
-
-  yPosition += 5;
-
-  // Tabela de categorias
-  const categoryRows = data.categories.map((cat) => [
-    `${cat.icon} ${cat.name}`,
-    cat.transactions.length.toString(),
-    formatCurrency(cat.spent),
-    `${cat.percentage.toFixed(1)}%`,
-  ]);
-
-  autoTable(doc, {
-    startY: yPosition,
-    head: [["Categoria", "Transações", "Total", "% do Total"]],
-    body: categoryRows,
-    theme: "striped",
-    headStyles: {
-      fillColor: primaryColor,
-      textColor: [255, 255, 255],
-      fontSize: 10,
-      fontStyle: "bold",
-    },
-    bodyStyles: {
-      fontSize: 9,
-    },
-    columnStyles: {
-      0: { cellWidth: 60 },
-      1: { cellWidth: 30, halign: "center" },
-      2: { cellWidth: 40, halign: "right" },
-      3: { cellWidth: 30, halign: "right" },
-    },
-    margin: { left: 15, right: 15 },
-  });
-
-  // @ts-ignore - autoTable adiciona finalY
-  yPosition = doc.lastAutoTable.finalY + 15;
-
-  // ====================
-  // DETALHAMENTO DE TRANSAÇÕES
+  // DETALHAMENTO POR MÉTODO DE PAGAMENTO
   // ====================
   if (yPosition > pageHeight - 40) {
     doc.addPage();
@@ -231,69 +282,240 @@ export function generatePersonExpensesPDF(data: PersonExpenseData): void {
 
   doc.setFontSize(14);
   doc.setFont("helvetica", "bold");
-  doc.text("Detalhamento de Transações", 15, yPosition);
+  doc.setTextColor(0, 0, 0);
+  doc.text("Detalhamento por Metodo de Pagamento", 15, yPosition);
 
-  yPosition += 5;
+  yPosition += 10;
 
-  // Agrupar todas as transações
-  const allTransactions: Array<{
-    date: string;
-    description: string;
-    category: string;
-    amount: string;
-    status: string;
-  }> = [];
+  // FATURAS DE CARTÃO
+  if (data.cardBills && data.cardBills.length > 0) {
+    data.cardBills.forEach((bill, index) => {
+      // Verificar se precisa de nova página
+      if (yPosition > pageHeight - 60) {
+        doc.addPage();
+        yPosition = 20;
+      }
 
-  data.categories.forEach((category) => {
-    category.transactions.forEach((transaction) => {
-      allTransactions.push({
-        date: new Date(transaction.date).toLocaleDateString("pt-BR"),
-        description: transaction.description || "Sem descrição",
-        category: `${category.icon} ${category.name}`,
-        amount: formatCurrency(transaction.amount),
-        status: transaction.isReimbursed ? "✓ Pago" : "⏳ Pendente",
+      // Nome do Cartão
+      const billDate = new Date(bill.billMonth + "-01");
+      const monthName = billDate.toLocaleDateString("pt-BR", { 
+        month: "long", 
+        year: "numeric" 
       });
+
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(...primaryColor);
+      doc.text(
+        `${getTextIcon("card")} ${bill.cardName} - Fatura de ${monthName}`,
+        15,
+        yPosition
+      );
+
+      yPosition += 5;
+
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(...secondaryColor);
+      doc.text(
+        `${bill.transactions.length} transacao(oes) | Fecha dia ${bill.closingDay} | Total: ${formatCurrency(bill.total)}`,
+        15,
+        yPosition
+      );
+
+      yPosition += 5;
+
+      // Tabela de transações do cartão
+      const cardTransactionRows = bill.transactions.map((t) => [
+        new Date(t.date).toLocaleDateString("pt-BR"),
+        sanitizeText(t.description || "Sem descricao"),
+        t.category ? sanitizeText(t.category.name) : "Sem categoria",
+        formatCurrency(t.amount),
+        t.isReimbursed ? "Pago" : "Pendente",
+      ]);
+
+      autoTable(doc, {
+        startY: yPosition,
+        head: [["Data", "Descricao", "Categoria", "Valor", "Status"]],
+        body: cardTransactionRows,
+        theme: "plain",
+        headStyles: {
+          fillColor: [245, 245, 245],
+          textColor: [0, 0, 0],
+          fontSize: 8,
+          fontStyle: "bold",
+        },
+        bodyStyles: {
+          fontSize: 7,
+          textColor: [60, 60, 60],
+        },
+        columnStyles: {
+          0: { cellWidth: 22 },
+          1: { cellWidth: 60 },
+          2: { cellWidth: 35 },
+          3: { cellWidth: 28, halign: "right" },
+          4: { cellWidth: 20, halign: "center" },
+        },
+        margin: { left: 15, right: 15 },
+        didDrawCell: (data) => {
+          // Linha separadora entre transações
+          if (data.section === "body" && data.column.index === 0) {
+            doc.setDrawColor(230, 230, 230);
+          }
+        },
+      });
+
+      // @ts-ignore
+      yPosition = doc.lastAutoTable.finalY + 10;
     });
-  });
+  }
 
-  // Ordenar por data (mais recente primeiro)
-  allTransactions.sort((a, b) => {
-    const dateA = new Date(a.date.split("/").reverse().join("-"));
-    const dateB = new Date(b.date.split("/").reverse().join("-"));
-    return dateB.getTime() - dateA.getTime();
-  });
+  // GASTOS DIRETOS (PIX, Transferência, etc)
+  if (data.directTransactions && data.directTransactions.length > 0) {
+    // Verificar se precisa de nova página
+    if (yPosition > pageHeight - 60) {
+      doc.addPage();
+      yPosition = 20;
+    }
 
-  const transactionRows = allTransactions.map((t) => [
-    t.date,
-    t.description,
-    t.category,
-    t.amount,
-    t.status,
-  ]);
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...primaryColor);
+    doc.text(
+      `${getTextIcon("pix")} Gastos Diretos (PIX / Transferencia)`,
+      15,
+      yPosition
+    );
 
-  autoTable(doc, {
-    startY: yPosition,
-    head: [["Data", "Descrição", "Categoria", "Valor", "Status"]],
-    body: transactionRows,
-    theme: "striped",
-    headStyles: {
-      fillColor: primaryColor,
-      textColor: [255, 255, 255],
-      fontSize: 9,
-      fontStyle: "bold",
-    },
-    bodyStyles: {
-      fontSize: 8,
-    },
-    columnStyles: {
-      0: { cellWidth: 25 },
-      1: { cellWidth: 50 },
-      2: { cellWidth: 40 },
-      3: { cellWidth: 30, halign: "right" },
-      4: { cellWidth: 25, halign: "center" },
-    },
-    margin: { left: 15, right: 15 },
-  });
+    yPosition += 5;
+
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...secondaryColor);
+    doc.text(
+      `${data.directTransactions.length} transacao(oes) | Total: ${formatCurrency(data.totalDirect || 0)}`,
+      15,
+      yPosition
+    );
+
+    yPosition += 5;
+
+    // Tabela de gastos diretos
+    const directTransactionRows = data.directTransactions.map((t) => [
+      new Date(t.date).toLocaleDateString("pt-BR"),
+      sanitizeText(t.description || "Sem descricao"),
+      t.category ? sanitizeText(t.category.name) : "Sem categoria",
+      formatCurrency(t.amount),
+      t.isReimbursed ? "Pago" : "Pendente",
+    ]);
+
+    autoTable(doc, {
+      startY: yPosition,
+      head: [["Data", "Descricao", "Categoria", "Valor", "Status"]],
+      body: directTransactionRows,
+      theme: "plain",
+      headStyles: {
+        fillColor: [245, 245, 245],
+        textColor: [0, 0, 0],
+        fontSize: 8,
+        fontStyle: "bold",
+      },
+      bodyStyles: {
+        fontSize: 7,
+        textColor: [60, 60, 60],
+      },
+      columnStyles: {
+        0: { cellWidth: 22 },
+        1: { cellWidth: 60 },
+        2: { cellWidth: 35 },
+        3: { cellWidth: 28, halign: "right" },
+        4: { cellWidth: 20, halign: "center" },
+      },
+      margin: { left: 15, right: 15 },
+    });
+
+    // @ts-ignore
+    yPosition = doc.lastAutoTable.finalY + 10;
+  }
+
+  // EMPRÉSTIMOS
+  if (data.loans && data.loans.length > 0) {
+    // Verificar se precisa de nova página
+    if (yPosition > pageHeight - 60) {
+      doc.addPage();
+      yPosition = 20;
+    }
+
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(...primaryColor);
+    doc.text(
+      `[Emprestimos] Gestao de Dividas`,
+      15,
+      yPosition
+    );
+
+    yPosition += 5;
+
+    doc.setFontSize(9);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(...secondaryColor);
+    doc.text(
+      `${data.loans.length} emprestimo(s) | Total: ${formatCurrency(data.totalLoans || 0)} | Restante: ${formatCurrency(data.totalLoansRemaining || 0)}`,
+      15,
+      yPosition
+    );
+
+    yPosition += 5;
+
+    // Tabela de empréstimos
+    const loanRows = data.loans.map((loan) => {
+      const isLent = loan.type === "LENT";
+      const progress = loan.totalAmount > 0 
+        ? ((loan.paidAmount / loan.totalAmount) * 100).toFixed(0) 
+        : "0";
+      
+      return [
+        sanitizeText(loan.description || (isLent ? "Emprestei" : "Peguei emprestado")),
+        isLent ? "Emprestei" : "Devo",
+        formatCurrency(loan.totalAmount),
+        formatCurrency(loan.paidAmount),
+        formatCurrency(loan.remainingAmount),
+        `${progress}%`,
+        loan.status === "PAID" ? "Pago" : loan.status === "PARTIAL" ? "Parcial" : "Pendente",
+      ];
+    });
+
+    autoTable(doc, {
+      startY: yPosition,
+      head: [["Descricao", "Tipo", "Total", "Pago", "Restante", "Progresso", "Status"]],
+      body: loanRows,
+      theme: "plain",
+      headStyles: {
+        fillColor: [245, 245, 245],
+        textColor: [0, 0, 0],
+        fontSize: 8,
+        fontStyle: "bold",
+      },
+      bodyStyles: {
+        fontSize: 7,
+        textColor: [60, 60, 60],
+      },
+      columnStyles: {
+        0: { cellWidth: 45 },
+        1: { cellWidth: 25, halign: "center" },
+        2: { cellWidth: 25, halign: "right" },
+        3: { cellWidth: 25, halign: "right" },
+        4: { cellWidth: 25, halign: "right" },
+        5: { cellWidth: 20, halign: "center" },
+        6: { cellWidth: 20, halign: "center" },
+      },
+      margin: { left: 15, right: 15 },
+    });
+
+    // @ts-ignore
+    yPosition = doc.lastAutoTable.finalY + 10;
+  }
 
   // ====================
   // FOOTER

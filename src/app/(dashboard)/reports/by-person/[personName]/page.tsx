@@ -15,6 +15,8 @@ import {
   Banknote,
   ChevronDown,
   ChevronUp,
+  HandCoins,
+  TrendingUp,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { showToast } from "@/lib/toast";
@@ -78,6 +80,25 @@ interface DirectTransaction {
   };
 }
 
+interface LoanData {
+  id: string;
+  type: string;
+  description: string | null;
+  totalAmount: number;
+  paidAmount: number;
+  remainingAmount: number;
+  installments: number;
+  dueDate: Date | string | null;
+  status: string;
+  createdAt: Date | string;
+  payments: Array<{
+    id: string;
+    amount: number;
+    date: Date | string;
+    notes: string | null;
+  }>;
+}
+
 interface PersonDetailData {
   personName: string;
   period: {
@@ -94,6 +115,11 @@ interface PersonDetailData {
   directTransactions?: DirectTransaction[];
   totalCard?: number;
   totalDirect?: number;
+  // Empréstimos
+  loans?: LoanData[];
+  totalLoans?: number;
+  totalLoansPaid?: number;
+  totalLoansRemaining?: number;
 }
 
 export default function PersonDetailPage() {
@@ -103,6 +129,7 @@ export default function PersonDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const [expandedDirect, setExpandedDirect] = useState(false);
+  const [expandedLoans, setExpandedLoans] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState(() => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
@@ -553,9 +580,200 @@ export default function PersonDetailPage() {
             </div>
           )}
 
+          {/* Empréstimos */}
+          {detailData.loans && detailData.loans.length > 0 && (
+            <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+              <button
+                onClick={() => setExpandedLoans(!expandedLoans)}
+                className="w-full p-6 text-left hover:bg-neutral-50 dark:hover:bg-neutral-800/50 transition-colors"
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-4 flex-1">
+                    <div className="w-14 h-14 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-xl flex items-center justify-center shadow-lg">
+                      <HandCoins className="h-7 w-7 text-white" />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-lg font-bold text-neutral-900 dark:text-white">
+                          Empréstimos
+                        </h3>
+                        <span className="px-2.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded-full text-xs font-medium">
+                          Gestão de Dívidas
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-3 mt-1">
+                        <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                          {detailData.loans.length} empréstimo
+                          {detailData.loans.length !== 1 ? "s" : ""}
+                        </p>
+                        <span className="text-neutral-300 dark:text-neutral-700">•</span>
+                        <p className="text-sm text-orange-600 dark:text-orange-400">
+                          {formatCurrency(detailData.totalLoansRemaining || 0)} restante
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="text-right">
+                      <p className="text-sm text-neutral-500 dark:text-neutral-400 mb-1">Total</p>
+                      <p className="text-2xl font-bold text-neutral-900 dark:text-white">
+                        {formatCurrency(detailData.totalLoans || 0)}
+                      </p>
+                    </div>
+                    {expandedLoans ? (
+                      <ChevronUp className="h-5 w-5 text-neutral-400" />
+                    ) : (
+                      <ChevronDown className="h-5 w-5 text-neutral-400" />
+                    )}
+                  </div>
+                </div>
+              </button>
+
+              {expandedLoans && (
+                <div className="px-6 pb-6 bg-neutral-50 dark:bg-neutral-800/30">
+                  <div className="space-y-3">
+                    {detailData.loans.map((loan) => {
+                      const isLent = loan.type === "LENT";
+                      const progress = loan.totalAmount > 0 
+                        ? (loan.paidAmount / loan.totalAmount) * 100 
+                        : 0;
+
+                      return (
+                        <div
+                          key={loan.id}
+                          className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-4"
+                        >
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h4 className="font-bold text-neutral-900 dark:text-white">
+                                  {loan.description || (isLent ? "Emprestei" : "Peguei emprestado")}
+                                </h4>
+                                <span
+                                  className={`px-2 py-0.5 rounded-md text-xs font-medium ${
+                                    isLent
+                                      ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                                      : "bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300"
+                                  }`}
+                                >
+                                  {isLent ? "Emprestei" : "Devo"}
+                                </span>
+                                <span
+                                  className={`px-2 py-0.5 rounded-md text-xs font-medium ${
+                                    loan.status === "PAID"
+                                      ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300"
+                                      : loan.status === "PARTIAL"
+                                      ? "bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300"
+                                      : "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300"
+                                  }`}
+                                >
+                                  {loan.status === "PAID"
+                                    ? "Pago"
+                                    : loan.status === "PARTIAL"
+                                    ? "Parcial"
+                                    : "Pendente"}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-3 text-xs text-neutral-500 dark:text-neutral-400">
+                                <Calendar className="h-3.5 w-3.5" />
+                                <span>
+                                  Criado em {new Date(loan.createdAt).toLocaleDateString("pt-BR")}
+                                </span>
+                                {loan.dueDate && (
+                                  <>
+                                    <span>•</span>
+                                    <span>
+                                      Vence em {new Date(loan.dueDate).toLocaleDateString("pt-BR")}
+                                    </span>
+                                  </>
+                                )}
+                                {loan.installments > 1 && (
+                                  <>
+                                    <span>•</span>
+                                    <span>{loan.installments}x</span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                            <div className="text-right ml-4">
+                              <p className="text-sm text-neutral-500 dark:text-neutral-400">
+                                Total
+                              </p>
+                              <p className="text-xl font-bold text-neutral-900 dark:text-white">
+                                {formatCurrency(loan.totalAmount)}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Barra de progresso */}
+                          <div className="mb-3">
+                            <div className="flex items-center justify-between text-xs text-neutral-600 dark:text-neutral-400 mb-1">
+                              <span>
+                                Pago: {formatCurrency(loan.paidAmount)} de {formatCurrency(loan.totalAmount)}
+                              </span>
+                              <span className="font-semibold">{progress.toFixed(0)}%</span>
+                            </div>
+                            <div className="h-2 bg-neutral-200 dark:bg-neutral-800 rounded-full overflow-hidden">
+                              <div
+                                className={`h-full ${
+                                  isLent
+                                    ? "bg-gradient-to-r from-green-500 to-green-600"
+                                    : "bg-gradient-to-r from-red-500 to-red-600"
+                                }`}
+                                style={{ width: `${progress}%` }}
+                              />
+                            </div>
+                            {loan.remainingAmount > 0 && (
+                              <p className="text-xs text-orange-600 dark:text-orange-400 mt-1">
+                                Restante: {formatCurrency(loan.remainingAmount)}
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Pagamentos */}
+                          {loan.payments.length > 0 && (
+                            <div className="border-t border-neutral-200 dark:border-neutral-800 pt-3">
+                              <p className="text-xs font-semibold text-neutral-700 dark:text-neutral-300 mb-2">
+                                Últimos Pagamentos:
+                              </p>
+                              <div className="space-y-1.5">
+                                {loan.payments.slice(0, 3).map((payment) => (
+                                  <div
+                                    key={payment.id}
+                                    className="flex items-center justify-between text-xs"
+                                  >
+                                    <span className="text-neutral-600 dark:text-neutral-400">
+                                      {new Date(payment.date).toLocaleDateString("pt-BR")}
+                                      {payment.notes && ` - ${payment.notes}`}
+                                    </span>
+                                    <span className="font-semibold text-neutral-900 dark:text-white">
+                                      {formatCurrency(payment.amount)}
+                                    </span>
+                                  </div>
+                                ))}
+                                {loan.payments.length > 3 && (
+                                  <p className="text-xs text-neutral-500 dark:text-neutral-400 italic">
+                                    +{loan.payments.length - 3} pagamento
+                                    {loan.payments.length - 3 > 1 ? "s" : ""}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
           {/* Mensagem se não houver dados */}
           {(!detailData.cardBills || detailData.cardBills.length === 0) &&
-            (!detailData.directTransactions || detailData.directTransactions.length === 0) && (
+            (!detailData.directTransactions || detailData.directTransactions.length === 0) &&
+            (!detailData.loans || detailData.loans.length === 0) && (
               <div className="bg-white dark:bg-neutral-900 rounded-2xl border border-neutral-200 dark:border-neutral-800 p-12 text-center">
                 <div className="w-16 h-16 bg-neutral-100 dark:bg-neutral-800 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Banknote className="h-8 w-8 text-neutral-400" />

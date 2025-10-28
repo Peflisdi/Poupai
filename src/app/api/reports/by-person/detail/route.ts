@@ -72,6 +72,28 @@ export async function GET(req: NextRequest) {
       },
     });
 
+    // Buscar empréstimos relacionados à pessoa
+    const loans = await prisma.loan.findMany({
+      where: {
+        userId: session.user.id,
+        personName: personName,
+        createdAt: {
+          gte: startDate,
+          lte: endDate,
+        },
+      },
+      include: {
+        payments: {
+          orderBy: {
+            date: "desc",
+          },
+        },
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+    });
+
     // Filtrar transações considerando o ciclo de faturamento
     const transactions = allTransactions.filter((transaction) => {
       if (transaction.cardId && transaction.card) {
@@ -222,6 +244,31 @@ export async function GET(req: NextRequest) {
       })),
       totalCard: cardTransactions.reduce((sum, t) => sum + Number(t.amount), 0),
       totalDirect: directTransactions.reduce((sum, t) => sum + Number(t.amount), 0),
+      // Empréstimos
+      loans: loans.map((loan) => ({
+        id: loan.id,
+        type: loan.type,
+        description: loan.description,
+        totalAmount: Number(loan.totalAmount),
+        paidAmount: Number(loan.paidAmount),
+        remainingAmount: Number(loan.totalAmount) - Number(loan.paidAmount),
+        installments: loan.installments,
+        dueDate: loan.dueDate,
+        status: loan.status,
+        createdAt: loan.createdAt,
+        payments: loan.payments.map((p) => ({
+          id: p.id,
+          amount: Number(p.amount),
+          date: p.date,
+          notes: p.notes,
+        })),
+      })),
+      totalLoans: loans.reduce((sum, l) => sum + Number(l.totalAmount), 0),
+      totalLoansPaid: loans.reduce((sum, l) => sum + Number(l.paidAmount), 0),
+      totalLoansRemaining: loans.reduce(
+        (sum, l) => sum + (Number(l.totalAmount) - Number(l.paidAmount)),
+        0
+      ),
     });
   } catch (error) {
     console.error("Erro ao buscar detalhes da pessoa:", error);
