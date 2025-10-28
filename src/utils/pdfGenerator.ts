@@ -296,21 +296,18 @@ export function generatePersonExpensesPDF(data: PersonExpenseData): void {
         yPosition = 20;
       }
 
-      // Nome do Cartão
-      const billDate = new Date(bill.billMonth + "-01");
-      const monthName = billDate.toLocaleDateString("pt-BR", { 
-        month: "long", 
-        year: "numeric" 
+      // Nome do Cartão - Parsear o mês corretamente
+      const [year, month] = bill.billMonth.split("-").map(Number);
+      const billDate = new Date(year, month - 1, 1); // month - 1 porque JS usa 0-11
+      const monthName = billDate.toLocaleDateString("pt-BR", {
+        month: "long",
+        year: "numeric",
       });
 
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(...primaryColor);
-      doc.text(
-        `${getTextIcon("card")} ${bill.cardName} - Fatura de ${monthName}`,
-        15,
-        yPosition
-      );
+      doc.text(`${getTextIcon("card")} ${bill.cardName} - Fatura de ${monthName}`, 15, yPosition);
 
       yPosition += 5;
 
@@ -318,7 +315,9 @@ export function generatePersonExpensesPDF(data: PersonExpenseData): void {
       doc.setFont("helvetica", "normal");
       doc.setTextColor(...secondaryColor);
       doc.text(
-        `${bill.transactions.length} transacao(oes) | Fecha dia ${bill.closingDay} | Total: ${formatCurrency(bill.total)}`,
+        `${bill.transactions.length} transacao(oes) | Fecha dia ${
+          bill.closingDay
+        } | Total: ${formatCurrency(bill.total)}`,
         15,
         yPosition
       );
@@ -381,11 +380,7 @@ export function generatePersonExpensesPDF(data: PersonExpenseData): void {
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(...primaryColor);
-    doc.text(
-      `${getTextIcon("pix")} Gastos Diretos (PIX / Transferencia)`,
-      15,
-      yPosition
-    );
+    doc.text(`${getTextIcon("pix")} Gastos Diretos (PIX / Transferencia)`, 15, yPosition);
 
     yPosition += 5;
 
@@ -393,7 +388,9 @@ export function generatePersonExpensesPDF(data: PersonExpenseData): void {
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...secondaryColor);
     doc.text(
-      `${data.directTransactions.length} transacao(oes) | Total: ${formatCurrency(data.totalDirect || 0)}`,
+      `${data.directTransactions.length} transacao(oes) | Total: ${formatCurrency(
+        data.totalDirect || 0
+      )}`,
       15,
       yPosition
     );
@@ -449,11 +446,7 @@ export function generatePersonExpensesPDF(data: PersonExpenseData): void {
     doc.setFontSize(12);
     doc.setFont("helvetica", "bold");
     doc.setTextColor(...primaryColor);
-    doc.text(
-      `[Emprestimos] Gestao de Dividas`,
-      15,
-      yPosition
-    );
+    doc.text(`[Emprestimos] Gestao de Dividas`, 15, yPosition);
 
     yPosition += 5;
 
@@ -461,7 +454,9 @@ export function generatePersonExpensesPDF(data: PersonExpenseData): void {
     doc.setFont("helvetica", "normal");
     doc.setTextColor(...secondaryColor);
     doc.text(
-      `${data.loans.length} emprestimo(s) | Total: ${formatCurrency(data.totalLoans || 0)} | Restante: ${formatCurrency(data.totalLoansRemaining || 0)}`,
+      `${data.loans.length} emprestimo(s) | Total: ${formatCurrency(
+        data.totalLoans || 0
+      )} | Restante: ${formatCurrency(data.totalLoansRemaining || 0)}`,
       15,
       yPosition
     );
@@ -471,10 +466,9 @@ export function generatePersonExpensesPDF(data: PersonExpenseData): void {
     // Tabela de empréstimos
     const loanRows = data.loans.map((loan) => {
       const isLent = loan.type === "LENT";
-      const progress = loan.totalAmount > 0 
-        ? ((loan.paidAmount / loan.totalAmount) * 100).toFixed(0) 
-        : "0";
-      
+      const progress =
+        loan.totalAmount > 0 ? ((loan.paidAmount / loan.totalAmount) * 100).toFixed(0) : "0";
+
       return [
         sanitizeText(loan.description || (isLent ? "Emprestei" : "Peguei emprestado")),
         isLent ? "Emprestei" : "Devo",

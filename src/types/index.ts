@@ -10,6 +10,20 @@ export interface User {
   updatedAt: Date;
 }
 
+// ===== PEOPLE =====
+export interface Person {
+  id: string;
+  name: string;
+  email: string | null;
+  phone: string | null;
+  notes: string | null;
+  color: string;
+  isActive: boolean;
+  userId: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 // ===== CATEGORIES =====
 export interface Category {
   id: string;

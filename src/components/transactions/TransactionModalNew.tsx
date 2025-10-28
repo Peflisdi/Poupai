@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X, AlertCircle } from "lucide-react";
+import { X, AlertCircle, UserPlus } from "lucide-react";
 import { Transaction, Category } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { FormInput } from "@/components/ui/FormInput";
 import { FormSelect } from "@/components/ui/FormSelect";
 import { FormCheckbox } from "@/components/ui/FormCheckbox";
 import { useCards } from "@/hooks/useCards";
+import { usePeople } from "@/hooks/usePeople";
+import PersonModal from "@/components/people/PersonModal";
 import { showToast } from "@/lib/toast";
 import {
   createTransactionSchema,
@@ -32,12 +34,16 @@ export function TransactionModal({
   categories,
 }: TransactionModalProps) {
   const { cards } = useCards();
+  const { people, createPerson } = usePeople();
 
   // Verificar se é parcela
   const isInstallment = transaction?.installmentPurchaseId != null;
 
   // Checkbox MARCADO por padrão para parcelas (comportamento esperado)
   const [updateAllInstallments, setUpdateAllInstallments] = useState(isInstallment);
+  
+  // Person modal states
+  const [isPersonModalOpen, setIsPersonModalOpen] = useState(false);
 
   const {
     register,
@@ -101,6 +107,18 @@ export function TransactionModal({
       }
     }
   }, [isOpen, transaction, categories, reset, isInstallment]);
+
+  const handleCreatePerson = async (personData: { name: string; email?: string; phone?: string; notes?: string; color?: string }) => {
+    try {
+      const newPerson = await createPerson(personData);
+      if (newPerson) {
+        setValue("paidBy", newPerson.name);
+      }
+      setIsPersonModalOpen(false);
+    } catch (error) {
+      console.error("Error creating person:", error);
+    }
+  };
 
   const onSubmit = async (data: CreateTransactionInput) => {
     try {
@@ -294,12 +312,47 @@ export function TransactionModal({
           )}
 
           {/* Pago Por */}
-          <FormInput
-            label="Pago por (opcional)"
-            {...register("paidBy")}
-            error={errors.paidBy}
-            placeholder="Nome da pessoa que pagou"
-          />
+          <div className="space-y-2">
+            <div className="flex items-center justify-between mb-2">
+              <span className="text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                Pago por (opcional)
+              </span>
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setIsPersonModalOpen(true)}
+                className="text-xs"
+              >
+                <UserPlus className="h-3 w-3 mr-1" />
+                Nova Pessoa
+              </Button>
+            </div>
+            <div className="relative">
+              {watch("paidBy") && people.find(p => p.name === watch("paidBy")) && (
+                <div
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full z-10 pointer-events-none"
+                  style={{ backgroundColor: people.find(p => p.name === watch("paidBy"))?.color }}
+                />
+              )}
+              <select
+                {...register("paidBy")}
+                className={`w-full px-4 py-2 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-transparent outline-none transition-all ${
+                  watch("paidBy") && people.find(p => p.name === watch("paidBy")) ? "pl-9" : ""
+                } ${errors.paidBy ? "border-red-500" : ""}`}
+              >
+                <option value="">Selecione uma pessoa</option>
+                {people.map((person) => (
+                  <option key={person.id} value={person.name}>
+                    {person.name}
+                  </option>
+                ))}
+              </select>
+              {errors.paidBy && (
+                <p className="text-sm text-red-500 mt-1">{errors.paidBy.message}</p>
+              )}
+            </div>
+          </div>
 
           {/* Reembolsado */}
           {watch("paidBy") && (
@@ -321,6 +374,13 @@ export function TransactionModal({
           </div>
         </form>
       </div>
+
+      {/* Person Modal */}
+      <PersonModal
+        isOpen={isPersonModalOpen}
+        onClose={() => setIsPersonModalOpen(false)}
+        onSave={handleCreatePerson}
+      />
     </div>
   );
 }

@@ -9,7 +9,8 @@ function getBillMonth(transactionDate: Date, closingDay: number): Date {
   let billMonth = transactionDate.getMonth();
   let billYear = transactionDate.getFullYear();
 
-  // Se a compra foi após o dia de fechamento, vai para a próxima fatura
+  // Se a compra foi ANTES do dia de fechamento, vai para a fatura DESTE mês
+  // Se a compra foi NO DIA ou DEPOIS do fechamento, vai para a fatura do PRÓXIMO mês
   if (transDay >= closingDay) {
     billMonth += 1;
     if (billMonth > 11) {
@@ -17,6 +18,7 @@ function getBillMonth(transactionDate: Date, closingDay: number): Date {
       billYear += 1;
     }
   }
+  // Se foi antes do fechamento, mantém o mês atual
 
   return new Date(billYear, billMonth, 1);
 }

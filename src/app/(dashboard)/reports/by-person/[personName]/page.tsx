@@ -234,9 +234,7 @@ export default function PersonDetailPage() {
                 <span>›</span>
                 <span>Gastos por Pessoa</span>
               </div>
-              <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
-                {personName}
-              </h1>
+              <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">{personName}</h1>
             </div>
           </div>
 
@@ -273,7 +271,8 @@ export default function PersonDetailPage() {
               </div>
             </div>
             <div className="text-xs opacity-75">
-              {detailData.transactionCount} transação{detailData.transactionCount !== 1 ? "ões" : ""}
+              {detailData.transactionCount} transação
+              {detailData.transactionCount !== 1 ? "ões" : ""}
             </div>
           </div>
 
@@ -294,7 +293,9 @@ export default function PersonDetailPage() {
               <div
                 className="h-full bg-gradient-to-r from-orange-500 to-orange-600"
                 style={{
-                  width: `${detailData.total > 0 ? (detailData.totalPending / detailData.total) * 100 : 0}%`,
+                  width: `${
+                    detailData.total > 0 ? (detailData.totalPending / detailData.total) * 100 : 0
+                  }%`,
                 }}
               />
             </div>
@@ -379,8 +380,14 @@ export default function PersonDetailPage() {
               {detailData.cardBills.map((bill, index) => {
                 const key = `${bill.cardName}-${bill.billMonth}`;
                 const isExpanded = expandedCards.has(key);
-                const billDate = new Date(bill.billMonth + "-01");
-                const monthName = billDate.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+
+                // Parsear o mês corretamente (formato: "2025-11")
+                const [year, month] = bill.billMonth.split("-").map(Number);
+                const billDate = new Date(year, month - 1, 1); // month - 1 porque JS usa 0-11
+                const monthName = billDate.toLocaleDateString("pt-BR", {
+                  month: "long",
+                  year: "numeric",
+                });
 
                 return (
                   <div
@@ -397,10 +404,7 @@ export default function PersonDetailPage() {
                             className="w-14 h-14 rounded-xl flex items-center justify-center shadow-inner"
                             style={{ backgroundColor: `${bill.cardColor}20` }}
                           >
-                            <CreditCard
-                              className="h-7 w-7"
-                              style={{ color: bill.cardColor }}
-                            />
+                            <CreditCard className="h-7 w-7" style={{ color: bill.cardColor }} />
                           </div>
                           <div>
                             <div className="flex items-center gap-2">
@@ -417,7 +421,8 @@ export default function PersonDetailPage() {
                               </p>
                               <span className="text-neutral-300 dark:text-neutral-700">•</span>
                               <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                                {bill.transactions.length} transação{bill.transactions.length !== 1 ? "ões" : ""}
+                                {bill.transactions.length} transação
+                                {bill.transactions.length !== 1 ? "ões" : ""}
                               </p>
                               <span className="text-neutral-300 dark:text-neutral-700">•</span>
                               <p className="text-sm text-neutral-500 dark:text-neutral-500">
@@ -467,7 +472,9 @@ export default function PersonDetailPage() {
                                 </div>
                                 <div className="flex items-center gap-2 text-xs text-neutral-500 dark:text-neutral-400">
                                   <Calendar className="h-3.5 w-3.5" />
-                                  <span>{new Date(transaction.date).toLocaleDateString("pt-BR")}</span>
+                                  <span>
+                                    {new Date(transaction.date).toLocaleDateString("pt-BR")}
+                                  </span>
                                   {transaction.category && (
                                     <>
                                       <span>•</span>
@@ -635,9 +642,8 @@ export default function PersonDetailPage() {
                   <div className="space-y-3">
                     {detailData.loans.map((loan) => {
                       const isLent = loan.type === "LENT";
-                      const progress = loan.totalAmount > 0 
-                        ? (loan.paidAmount / loan.totalAmount) * 100 
-                        : 0;
+                      const progress =
+                        loan.totalAmount > 0 ? (loan.paidAmount / loan.totalAmount) * 100 : 0;
 
                       return (
                         <div
@@ -710,7 +716,8 @@ export default function PersonDetailPage() {
                           <div className="mb-3">
                             <div className="flex items-center justify-between text-xs text-neutral-600 dark:text-neutral-400 mb-1">
                               <span>
-                                Pago: {formatCurrency(loan.paidAmount)} de {formatCurrency(loan.totalAmount)}
+                                Pago: {formatCurrency(loan.paidAmount)} de{" "}
+                                {formatCurrency(loan.totalAmount)}
                               </span>
                               <span className="font-semibold">{progress.toFixed(0)}%</span>
                             </div>

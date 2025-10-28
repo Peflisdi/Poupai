@@ -33,8 +33,29 @@ model User {
   goals                Goal[]
   installmentPurchases InstallmentPurchase[]
   loans                Loan[]
+  people               Person[] // Pessoas cadastradas pelo usuário
 
   @@map("users")
+}
+
+// ===== PEOPLE (Pessoas/Contatos) =====
+model Person {
+  id        String   @id @default(cuid())
+  name      String // Nome da pessoa (ex: "Mamãe", "João", "Maria")
+  email     String? // Email opcional
+  phone     String? // Telefone opcional
+  notes     String? // Notas/observações
+  color     String   @default("#8B5CF6") // Cor para identificação visual
+  isActive  Boolean  @default(true) // Se está ativa ou arquivada
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, name]) // Não pode ter 2 pessoas com mesmo nome para o mesmo usuário
+  @@index([userId, isActive])
+  @@map("people")
 }
 
 model Account {

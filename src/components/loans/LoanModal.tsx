@@ -1,12 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { X } from "lucide-react";
+import { X, UserPlus } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { CurrencyInput } from "@/components/ui/CurrencyInput";
 import { Select } from "@/components/ui/Select";
 import { Loan, CreateLoanData } from "@/services/loanService";
+import { usePeople } from "@/hooks/usePeople";
+import PersonModal from "@/components/people/PersonModal";
 
 interface LoanModalProps {
   isOpen: boolean;
@@ -16,6 +18,8 @@ interface LoanModalProps {
 }
 
 export function LoanModal({ isOpen, onClose, onSave, loan }: LoanModalProps) {
+  const { people, createPerson } = usePeople();
+  
   const [formData, setFormData] = useState<CreateLoanData>({
     type: "LENT",
     personName: "",
@@ -26,6 +30,7 @@ export function LoanModal({ isOpen, onClose, onSave, loan }: LoanModalProps) {
     notes: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [isPersonModalOpen, setIsPersonModalOpen] = useState(false);
 
   useEffect(() => {
     if (loan) {
@@ -50,6 +55,18 @@ export function LoanModal({ isOpen, onClose, onSave, loan }: LoanModalProps) {
       });
     }
   }, [loan, isOpen]);
+
+  const handleCreatePerson = async (personData: { name: string; email?: string; phone?: string; notes?: string; color?: string }) => {
+    try {
+      const newPerson = await createPerson(personData);
+      if (newPerson) {
+        setFormData({ ...formData, personName: newPerson.name });
+      }
+      setIsPersonModalOpen(false);
+    } catch (error) {
+      console.error("Error creating person:", error);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -132,16 +149,44 @@ export function LoanModal({ isOpen, onClose, onSave, loan }: LoanModalProps) {
 
             {/* Nome da Pessoa */}
             <div>
-              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                Nome da Pessoa *
-              </label>
-              <Input
-                type="text"
-                value={formData.personName}
-                onChange={(e) => setFormData({ ...formData, personName: e.target.value })}
-                placeholder="Ex: Maria, João..."
-                required
-              />
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
+                  Nome da Pessoa *
+                </label>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setIsPersonModalOpen(true)}
+                  className="text-xs"
+                >
+                  <UserPlus className="h-3 w-3 mr-1" />
+                  Nova Pessoa
+                </Button>
+              </div>
+              <div className="relative">
+                {formData.personName && people.find(p => p.name === formData.personName) && (
+                  <div
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full z-10 pointer-events-none"
+                    style={{ backgroundColor: people.find(p => p.name === formData.personName)?.color }}
+                  />
+                )}
+                <select
+                  value={formData.personName}
+                  onChange={(e) => setFormData({ ...formData, personName: e.target.value })}
+                  required
+                  className={`w-full px-4 py-2 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-transparent outline-none transition-all ${
+                    formData.personName && people.find(p => p.name === formData.personName) ? "pl-9" : ""
+                  }`}
+                >
+                  <option value="">Selecione uma pessoa</option>
+                  {people.map((person) => (
+                    <option key={person.id} value={person.name}>
+                      {person.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             {/* Valor Total */}
@@ -232,6 +277,13 @@ export function LoanModal({ isOpen, onClose, onSave, loan }: LoanModalProps) {
           </div>
         </form>
       </div>
+
+      {/* Person Modal */}
+      <PersonModal
+        isOpen={isPersonModalOpen}
+        onClose={() => setIsPersonModalOpen(false)}
+        onSave={handleCreatePerson}
+      />
     </div>
   );
 }

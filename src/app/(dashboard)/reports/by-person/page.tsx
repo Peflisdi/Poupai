@@ -10,6 +10,8 @@ import {
   Download,
   Receipt,
   FileText,
+  Settings,
+  UserPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
@@ -17,6 +19,9 @@ import { showToast } from "@/lib/toast";
 import { formatCurrency } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { generateAllPeopleExpensesPDF } from "@/utils/pdfGenerator";
+import { usePeople } from "@/hooks/usePeople";
+import PersonModal from "@/components/people/PersonModal";
+import type { Person } from "@/types";
 
 interface PersonReport {
   personName: string;
@@ -48,6 +53,18 @@ export default function ReportsByPersonPage() {
   const [endDate, setEndDate] = useState("");
   const [onlyPending, setOnlyPending] = useState(false);
 
+  // People management states
+  const [isPersonModalOpen, setIsPersonModalOpen] = useState(false);
+  const [selectedPerson, setSelectedPerson] = useState<Person | undefined>(undefined);
+  const [showPeopleManager, setShowPeopleManager] = useState(false);
+  const {
+    people,
+    isLoading: isPeopleLoading,
+    createPerson,
+    updatePerson,
+    deletePerson,
+  } = usePeople();
+
   const fetchReport = async () => {
     setIsLoading(true);
     try {
@@ -73,6 +90,45 @@ export default function ReportsByPersonPage() {
     fetchReport();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Person management handlers
+  const handleOpenPersonModal = (person?: Person) => {
+    setSelectedPerson(person);
+    setIsPersonModalOpen(true);
+  };
+
+  const handleClosePersonModal = () => {
+    setIsPersonModalOpen(false);
+    setSelectedPerson(undefined);
+  };
+
+  const handleSavePerson = async (personData: {
+    name: string;
+    email?: string;
+    phone?: string;
+    notes?: string;
+    color?: string;
+  }) => {
+    try {
+      if (selectedPerson) {
+        await updatePerson(selectedPerson.id, personData);
+      } else {
+        await createPerson(personData);
+      }
+      handleClosePersonModal();
+    } catch (error) {
+      console.error("Error saving person:", error);
+    }
+  };
+
+  const handleDeletePerson = async (personId: string) => {
+    if (!confirm("Tem certeza que deseja arquivar esta pessoa?")) return;
+    try {
+      await deletePerson(personId);
+    } catch (error) {
+      console.error("Error deleting person:", error);
+    }
+  };
 
   const handleMarkAsReimbursed = async (personName: string) => {
     if (!confirm(`Marcar todas as transações de ${personName} como reembolsadas?`)) return;
@@ -206,6 +262,13 @@ export default function ReportsByPersonPage() {
           <div className="flex items-end gap-2">
             <Button onClick={fetchReport} variant="primary" className="flex-1">
               Filtrar
+            </Button>
+            <Button
+              onClick={() => setShowPeopleManager(!showPeopleManager)}
+              variant="secondary"
+              title="Gerenciar Pessoas"
+            >
+              <Settings className="h-4 w-4" />
             </Button>
             <Button
               onClick={handleExportAllPDF}
@@ -422,6 +485,93 @@ export default function ReportsByPersonPage() {
           ))
         )}
       </div>
+
+      {/* People Manager Panel */}
+      {showPeopleManager && (
+        <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-neutral-900 dark:text-white flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              Gerenciar Pessoas
+            </h2>
+            <Button onClick={() => handleOpenPersonModal()} variant="primary" size="sm">
+              <UserPlus className="h-4 w-4 mr-2" />
+              Nova Pessoa
+            </Button>
+          </div>
+
+          {isPeopleLoading ? (
+            <div className="text-center py-8 text-neutral-500 dark:text-neutral-400">
+              Carregando pessoas...
+            </div>
+          ) : people.length === 0 ? (
+            <div className="text-center py-8 text-neutral-500 dark:text-neutral-400">
+              Nenhuma pessoa cadastrada. Clique em &quot;Nova Pessoa&quot; para adicionar.
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {people.map((person) => (
+                <div
+                  key={person.id}
+                  className="border border-neutral-200 dark:border-neutral-800 rounded-lg p-4 hover:shadow-md transition-shadow"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <div
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: person.color }}
+                      />
+                      <h3 className="font-medium text-neutral-900 dark:text-white">
+                        {person.name}
+                      </h3>
+                    </div>
+                  </div>
+
+                  {(person.email || person.phone) && (
+                    <div className="space-y-1 mb-3 text-sm text-neutral-600 dark:text-neutral-400">
+                      {person.email && <p>📧 {person.email}</p>}
+                      {person.phone && <p>📱 {person.phone}</p>}
+                    </div>
+                  )}
+
+                  {person.notes && (
+                    <p className="text-xs text-neutral-500 dark:text-neutral-400 mb-3 line-clamp-2">
+                      {person.notes}
+                    </p>
+                  )}
+
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={() => handleOpenPersonModal(person)}
+                      variant="secondary"
+                      size="sm"
+                      className="flex-1"
+                    >
+                      Editar
+                    </Button>
+                    <Button
+                      onClick={() => handleDeletePerson(person.id)}
+                      variant="danger"
+                      size="sm"
+                      className="flex-1"
+                    >
+                      Arquivar
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Person Modal */}
+      <PersonModal
+        isOpen={isPersonModalOpen}
+        onClose={handleClosePersonModal}
+        onSave={handleSavePerson}
+        person={selectedPerson}
+      />
     </div>
   );
 }
