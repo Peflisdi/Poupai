@@ -387,7 +387,7 @@ export default function LoansPage() {
           setSelectedLoan(null);
         }}
         onSave={handleCreateLoan}
-        loan={selectedLoan}
+        loan={selectedLoan ?? undefined}
       />
 
       {selectedLoanForPayment && (

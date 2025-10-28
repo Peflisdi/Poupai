@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { X, Palette } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
+import { FormInput } from "@/components/ui/FormInput";
 import { Category } from "@/types";
 import { showToast, toastMessages } from "@/lib/toast";
-import { categoryValidations, ValidationError } from "@/lib/validations";
-import { formatCurrency, parseCurrency } from "@/lib/currency";
+import { createCategorySchema, type CreateCategoryInput } from "@/lib/validations/category";
 
 interface CategoryModalProps {
   isOpen: boolean;
@@ -18,49 +19,16 @@ interface CategoryModalProps {
 }
 
 const CATEGORY_ICONS = [
-  "🍕",
-  "🛒",
-  "🏠",
-  "🚗",
-  "⚡",
-  "💊",
-  "🎓",
-  "🎮",
-  "👕",
-  "✈️",
-  "🎬",
-  "📱",
-  "💰",
-  "🎁",
-  "🏋️",
-  "🐕",
-  "📚",
-  "🍺",
-  "☕",
-  "🚕",
-  "🏥",
-  "💇",
-  "🧹",
-  "🔧",
+  "🍕", "🛒", "🏠", "🚗", "⚡", "💊", "🎓", "🎮",
+  "👕", "✈️", "🎬", "📱", "💰", "🎁", "🏋️", "🐕",
+  "📚", "🍺", "☕", "🚕", "🏥", "💇", "🧹", "🔧",
 ];
 
 const CATEGORY_COLORS = [
-  "#EF4444", // red
-  "#F97316", // orange
-  "#F59E0B", // amber
-  "#EAB308", // yellow
-  "#84CC16", // lime
-  "#22C55E", // green
-  "#10B981", // emerald
-  "#14B8A6", // teal
-  "#06B6D4", // cyan
-  "#0EA5E9", // sky
-  "#3B82F6", // blue
-  "#6366F1", // indigo
-  "#8B5CF6", // violet
-  "#A855F7", // purple
-  "#D946EF", // fuchsia
-  "#EC4899", // pink
+  "#EF4444", "#F97316", "#F59E0B", "#EAB308",
+  "#84CC16", "#22C55E", "#10B981", "#14B8A6",
+  "#06B6D4", "#0EA5E9", "#3B82F6", "#6366F1",
+  "#8B5CF6", "#A855F7", "#D946EF", "#EC4899",
 ];
 
 export function CategoryModal({
@@ -70,70 +38,82 @@ export function CategoryModal({
   category,
   categories = [],
 }: CategoryModalProps) {
-  const [formData, setFormData] = useState({
-    name: category?.name || "",
-    icon: category?.icon || "🍕",
-    color: category?.color || "#3B82F6",
-    budget: category?.budget?.toString() || "",
-    parentId: category?.parentId || "",
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+    watch,
+    setValue,
+  } = useForm<CreateCategoryInput>({
+    resolver: zodResolver(createCategorySchema),
+    defaultValues: {
+      name: "",
+      icon: "🍕",
+      color: "#3B82F6",
+      budget: undefined,
+      parentId: undefined,
+    },
   });
-  const [isLoading, setIsLoading] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const selectedIcon = watch("icon");
+  const selectedColor = watch("color");
+  const watchedName = watch("name");
+  const watchedBudget = watch("budget");
 
-    // Limpar erros anteriores
-    setValidationErrors([]);
-
-    // Validar formulário
-    const validation = categoryValidations.validate({
-      name: formData.name.trim(),
-      icon: formData.icon,
-      color: formData.color,
-      budget: formData.budget ? parseCurrency(formData.budget) : undefined,
-    });
-
-    if (!validation.isValid) {
-      setValidationErrors(validation.errors);
-      showToast.error("Por favor, corrija os erros no formulário");
-      return;
+  // Reset form when modal opens/closes or category changes
+  useEffect(() => {
+    if (isOpen) {
+      if (category) {
+        reset({
+          name: category.name,
+          icon: category.icon,
+          color: category.color,
+          budget: category.budget || undefined,
+          parentId: category.parentId || undefined,
+        });
+      } else {
+        reset({
+          name: "",
+          icon: "🍕",
+          color: "#3B82F6",
+          budget: undefined,
+          parentId: undefined,
+        });
+      }
     }
+  }, [isOpen, category, reset]);
 
-    setIsLoading(true);
+  const onSubmit = async (data: CreateCategoryInput) => {
     try {
-      const data: any = {
-        name: formData.name.trim(),
-        icon: formData.icon,
-        color: formData.color,
-        budget: formData.budget ? parseCurrency(formData.budget) : undefined,
-        parentId: formData.parentId || undefined,
+      const categoryData: any = {
+        name: data.name.trim(),
+        icon: data.icon,
+        color: data.color,
+        budget: data.budget || undefined,
+        parentId: data.parentId || undefined,
       };
 
       if (category) {
-        data.id = category.id;
+        categoryData.id = category.id;
       }
 
-      await onSave(data);
+      await onSave(categoryData);
       showToast.success(
         category ? toastMessages.categories.updated : toastMessages.categories.created
       );
+
       onClose();
+      reset();
     } catch (error) {
       console.error("Erro ao salvar categoria:", error);
       showToast.error(toastMessages.categories.error);
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  const getErrorMessage = (field: string): string | undefined => {
-    const error = validationErrors.find((e) => e.field === field);
-    return error?.message;
-  };
-
-  const hasError = (field: string): boolean => {
-    return validationErrors.some((e) => e.field === field);
+  const handleClose = () => {
+    reset();
+    onClose();
   };
 
   if (!isOpen) return null;
@@ -143,21 +123,17 @@ export function CategoryModal({
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 dark:bg-black/95"
-      onClick={(e) => e.target === e.currentTarget && onClose()}
-      style={{ margin: 0 }}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md"
+      onClick={(e) => e.target === e.currentTarget && handleClose()}
     >
-      <div
-        className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto"
-        style={{ margin: 0 }}
-      >
+      <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 max-w-2xl w-full shadow-2xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-neutral-200 dark:border-neutral-800 sticky top-0 bg-white dark:bg-neutral-900 z-10">
-          <h2 className="text-xl font-bold text-neutral-900 dark:text-white">
+          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">
             {category ? "Editar Categoria" : "Nova Categoria"}
           </h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
           >
             <X className="h-5 w-5 text-neutral-600 dark:text-neutral-400" />
@@ -165,40 +141,48 @@ export function CategoryModal({
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          {/* Nome */}
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-              Nome da Categoria *
-            </label>
-            <Input
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
+          {/* Nome e Orçamento em grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Nome */}
+            <FormInput
+              label="Nome da Categoria"
+              {...register("name")}
+              error={errors.name}
               placeholder="Ex: Alimentação"
               required
-              className={hasError("Nome") ? "border-red-500 dark:border-red-500" : ""}
             />
-            {hasError("Nome") && (
-              <p className="text-xs text-red-500 mt-1">{getErrorMessage("Nome")}</p>
-            )}
+
+            {/* Budget */}
+            <FormInput
+              label="Orçamento Mensal (Opcional)"
+              type="number"
+              step="0.01"
+              {...register("budget", { 
+                setValueAs: (value) => value === "" ? undefined : parseFloat(value)
+              })}
+              error={errors.budget}
+              placeholder="0,00"
+            />
           </div>
 
           {/* Ícone */}
           <div>
-            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-3">
               Ícone
             </label>
-            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+            <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-12 gap-2">
               {CATEGORY_ICONS.map((icon) => (
                 <button
                   key={icon}
                   type="button"
-                  onClick={() => setFormData({ ...formData, icon })}
-                  className={`p-3 text-2xl rounded-lg border-2 transition-all hover:scale-110 flex items-center justify-center ${
-                    formData.icon === icon
-                      ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20"
+                  onClick={() => setValue("icon", icon)}
+                  className={`p-2 text-2xl rounded-lg border-2 transition-all hover:scale-110 flex items-center justify-center aspect-square ${
+                    selectedIcon === icon
+                      ? "border-blue-500 bg-blue-50 dark:bg-blue-900/20 scale-105"
                       : "border-neutral-200 dark:border-neutral-700 hover:border-neutral-300 dark:hover:border-neutral-600"
                   }`}
+                  aria-label={`Ícone ${icon}`}
                 >
                   {icon}
                 </button>
@@ -208,67 +192,27 @@ export function CategoryModal({
 
           {/* Cor */}
           <div>
-            <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
+            <label className="flex items-center gap-2 text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-3">
               <Palette className="w-4 h-4" />
               Cor
             </label>
-            <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+            <div className="grid grid-cols-8 gap-2">
               {CATEGORY_COLORS.map((color) => (
                 <button
                   key={color}
                   type="button"
-                  onClick={() => setFormData({ ...formData, color })}
+                  onClick={() => setValue("color", color)}
                   className={`w-full h-10 rounded-lg border-2 transition-all hover:scale-110 ${
-                    formData.color === color
-                      ? "border-neutral-900 dark:border-white ring-2 ring-offset-2 ring-neutral-900 dark:ring-white"
+                    selectedColor === color
+                      ? "border-neutral-900 dark:border-white ring-2 ring-offset-2 ring-neutral-900 dark:ring-white scale-105"
                       : "border-neutral-200 dark:border-neutral-700"
                   }`}
                   style={{ backgroundColor: color }}
                   title={color}
+                  aria-label={`Cor ${color}`}
                 />
               ))}
             </div>
-          </div>
-
-          {/* Budget */}
-          <div>
-            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-              Orçamento Mensal (Opcional)
-            </label>
-            <div className="relative">
-              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-neutral-500 dark:text-neutral-400">
-                R$
-              </span>
-              <Input
-                type="text"
-                value={formData.budget}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  // Remove tudo exceto números, vírgula e ponto
-                  const cleaned = value.replace(/[^\d,.]/g, "");
-                  setFormData({ ...formData, budget: cleaned });
-                }}
-                onBlur={(e) => {
-                  // Formata ao sair do campo
-                  const value = e.target.value;
-                  if (value) {
-                    const number = parseCurrency(value);
-                    setFormData({ ...formData, budget: number.toFixed(2).replace(".", ",") });
-                  }
-                }}
-                placeholder="0,00"
-                className={`pl-10 ${
-                  hasError("Orçamento") ? "border-red-500 dark:border-red-500" : ""
-                }`}
-              />
-            </div>
-            {hasError("Orçamento") ? (
-              <p className="text-xs text-red-500 mt-1">{getErrorMessage("Orçamento")}</p>
-            ) : (
-              <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
-                Define um limite de gastos mensais para esta categoria
-              </p>
-            )}
           </div>
 
           {/* Categoria Pai (Subcategoria) */}
@@ -278,8 +222,7 @@ export function CategoryModal({
                 Categoria Pai (Opcional)
               </label>
               <select
-                value={formData.parentId}
-                onChange={(e) => setFormData({ ...formData, parentId: e.target.value })}
+                {...register("parentId")}
                 className="w-full px-3 py-2 rounded-lg border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-800 text-neutral-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 <option value="">Categoria Principal</option>
@@ -297,23 +240,26 @@ export function CategoryModal({
 
           {/* Preview */}
           <div className="p-4 rounded-lg bg-neutral-50 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700">
-            <p className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-2">
+            <p className="text-xs font-medium text-neutral-600 dark:text-neutral-400 mb-3">
               Pré-visualização
             </p>
             <div className="flex items-center gap-3">
               <div
-                className="w-12 h-12 rounded-full flex items-center justify-center text-2xl"
-                style={{ backgroundColor: `${formData.color}20`, color: formData.color }}
+                className="w-12 h-12 rounded-full flex items-center justify-center text-2xl transition-all"
+                style={{ 
+                  backgroundColor: `${selectedColor}20`, 
+                  color: selectedColor 
+                }}
               >
-                {formData.icon}
+                {selectedIcon}
               </div>
               <div>
                 <p className="font-medium text-neutral-900 dark:text-white">
-                  {formData.name || "Nome da Categoria"}
+                  {watchedName || "Nome da Categoria"}
                 </p>
-                {formData.budget && (
+                {watchedBudget && (
                   <p className="text-sm text-neutral-600 dark:text-neutral-400">
-                    Orçamento: {formatCurrency(parseCurrency(formData.budget))}
+                    Orçamento: R$ {watchedBudget.toFixed(2).replace('.', ',')}
                   </p>
                 )}
               </div>
@@ -321,18 +267,17 @@ export function CategoryModal({
           </div>
 
           {/* Actions */}
-          <div className="flex gap-3 pt-4">
+          <div className="flex justify-end gap-3 pt-4">
             <Button
               type="button"
               variant="secondary"
-              onClick={onClose}
-              className="flex-1"
-              disabled={isLoading}
+              onClick={handleClose}
+              disabled={isSubmitting}
             >
               Cancelar
             </Button>
-            <Button type="submit" className="flex-1" disabled={isLoading}>
-              {isLoading ? "Salvando..." : category ? "Atualizar" : "Criar Categoria"}
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Salvando..." : category ? "Atualizar" : "Criar Categoria"}
             </Button>
           </div>
         </form>

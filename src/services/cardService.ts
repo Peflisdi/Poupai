@@ -26,6 +26,11 @@ export interface Card {
   createdAt: string;
   updatedAt: string;
   transactions?: any[];
+  // Campos opcionais calculados pelo backend
+  currentBill?: number;
+  totalCommitted?: number;
+  availableLimit?: number;
+  usagePercentage?: number;
 }
 
 class CardService {
@@ -92,6 +97,12 @@ class CardService {
 
   // Calcular gasto atual do cartão
   calculateCurrentBill(card: Card): number {
+    // Se o backend já calculou, usar o valor dele
+    if (card.currentBill !== undefined) {
+      return card.currentBill;
+    }
+
+    // Fallback: calcular localmente (menos preciso)
     if (!card.transactions || card.transactions.length === 0) {
       return 0;
     }
@@ -106,12 +117,24 @@ class CardService {
 
   // Calcular limite disponível
   calculateAvailableLimit(card: Card): number {
+    // Se o backend já calculou (incluindo parcelas futuras), usar o valor dele
+    if (card.availableLimit !== undefined) {
+      return card.availableLimit;
+    }
+
+    // Fallback: calcular localmente (sem considerar parcelas futuras)
     const currentBill = this.calculateCurrentBill(card);
     return card.limit - currentBill;
   }
 
   // Calcular percentual de uso do limite
   calculateUsagePercentage(card: Card): number {
+    // Se o backend já calculou, usar o valor dele
+    if (card.usagePercentage !== undefined) {
+      return card.usagePercentage;
+    }
+
+    // Fallback: calcular localmente
     const currentBill = this.calculateCurrentBill(card);
     return (currentBill / card.limit) * 100;
   }

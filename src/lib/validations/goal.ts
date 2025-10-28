@@ -18,15 +18,17 @@ export const goalSchema = z.object({
     })
     .nonnegative("Valor atual não pode ser negativo")
     .max(999999999, "Valor muito alto")
+    .optional()
     .default(0),
   deadline: z
     .date({
-      required_error: "Prazo é obrigatório",
       invalid_type_error: "Prazo inválido",
     })
     .refine((date) => date > new Date(), {
       message: "Prazo deve ser uma data futura",
-    }),
+    })
+    .nullable()
+    .optional(),
   icon: z
     .string()
     .max(10, "Ícone muito longo")

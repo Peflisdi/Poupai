@@ -82,6 +82,12 @@ export interface Card {
   userId: string;
   createdAt: Date;
   updatedAt: Date;
+  // Campos opcionais calculados pelo backend
+  transactions?: Transaction[];
+  currentBill?: number; // Fatura do período atual (sem parcelas)
+  totalCommitted?: number; // Total comprometido (incluindo parcelas futuras)
+  availableLimit?: number; // Limite disponível real
+  usagePercentage?: number; // Percentual de uso do limite
 }
 
 // ===== GOALS =====

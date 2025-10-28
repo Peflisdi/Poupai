@@ -137,10 +137,24 @@ export default function ReportsByPersonPage() {
     if (!confirm(`Marcar todas as transações de ${personName} como reembolsadas?`)) return;
 
     try {
-      // Aqui você pode criar uma API para marcar todas como reembolsadas de uma vez
-      showToast.success("Funcionalidade em desenvolvimento!");
+      showToast.loading("Atualizando transações...");
+
+      const res = await fetch("/api/reports/by-person/mark-reimbursed", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ personName }),
+      });
+
+      if (!res.ok) throw new Error("Erro ao atualizar");
+
+      const data = await res.json();
+      showToast.success(data.message || "Transações marcadas como reembolsadas!");
+
+      // Recarregar o relatório
+      await fetchReport();
     } catch (error) {
       showToast.error("Erro ao marcar como reembolsado");
+      console.error(error);
     }
   };
 

@@ -20,13 +20,8 @@ export const categorySchema = z.object({
     })
     .nonnegative("Orçamento não pode ser negativo")
     .max(999999999, "Orçamento muito alto")
-    .default(0),
-  type: z
-    .enum(["INCOME", "EXPENSE"], {
-      required_error: "Tipo é obrigatório",
-      invalid_type_error: "Tipo deve ser INCOME ou EXPENSE",
-    })
-    .default("EXPENSE"),
+    .optional(),
+  parentId: z.string().nullable().optional(),
 });
 
 /**

@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { X } from "lucide-react";
+import { useEffect } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { X, Target } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
-import { Goal, CreateGoalData, goalService } from "@/services/goalService";
+import { FormInput } from "@/components/ui/FormInput";
+import { Goal, goalService } from "@/services/goalService";
 import { showToast, toastMessages } from "@/lib/toast";
-import { goalValidations, ValidationError } from "@/lib/validations";
+import { createGoalSchema, type CreateGoalInput } from "@/lib/validations/goal";
 
 interface GoalModalProps {
   goal?: Goal | null;
@@ -16,116 +18,110 @@ interface GoalModalProps {
 
 const GOAL_ICONS = ["🎯", "🏠", "🚗", "✈️", "💰", "💍", "🎓", "💻", "📱", "🎮", "🏖️", "🏥"];
 const GOAL_COLORS = [
-  "#EF4444",
-  "#F97316",
-  "#F59E0B",
-  "#84CC16",
-  "#22C55E",
-  "#14B8A6",
-  "#06B6D4",
-  "#3B82F6",
-  "#6366F1",
-  "#8B5CF6",
-  "#EC4899",
-  "#F43F5E",
+  "#EF4444", "#F97316", "#F59E0B", "#84CC16",
+  "#22C55E", "#14B8A6", "#06B6D4", "#3B82F6",
+  "#6366F1", "#8B5CF6", "#EC4899", "#F43F5E",
 ];
 
 export function GoalModal({ goal, onClose, onSave }: GoalModalProps) {
-  const [formData, setFormData] = useState({
-    name: "",
-    targetAmount: "",
-    deadline: "",
-    icon: "🎯",
-    color: "#3B82F6",
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isSubmitting },
+    reset,
+    watch,
+    setValue,
+  } = useForm<CreateGoalInput>({
+    resolver: zodResolver(createGoalSchema),
+    defaultValues: {
+      name: "",
+      targetAmount: 0,
+      currentAmount: 0,
+      deadline: undefined,
+      icon: "🎯",
+      color: "#10B981",
+    },
   });
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
-  const [validationErrors, setValidationErrors] = useState<ValidationError[]>([]);
 
+  const selectedIcon = watch("icon");
+  const selectedColor = watch("color");
+  const watchedName = watch("name");
+  const watchedTargetAmount = watch("targetAmount");
+  const watchedCurrentAmount = watch("currentAmount");
+
+  // Calcular progresso
+  const progress = watchedTargetAmount > 0 
+    ? Math.min((watchedCurrentAmount || 0) / watchedTargetAmount * 100, 100)
+    : 0;
+
+  // Reset form when modal opens/closes or goal changes
   useEffect(() => {
     if (goal) {
-      setFormData({
+      reset({
         name: goal.name,
-        targetAmount: goal.targetAmount.toString(),
-        deadline: goal.deadline ? new Date(goal.deadline).toISOString().split("T")[0] : "",
+        targetAmount: goal.targetAmount,
+        currentAmount: goal.currentAmount || 0,
+        deadline: goal.deadline ? new Date(goal.deadline) : undefined,
         icon: goal.icon,
         color: goal.color,
       });
+    } else {
+      reset({
+        name: "",
+        targetAmount: 0,
+        currentAmount: 0,
+        deadline: undefined,
+        icon: "🎯",
+        color: "#10B981",
+      });
     }
-  }, [goal]);
+  }, [goal, reset]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setValidationErrors([]);
-
-    // Validar formulário
-    const validation = goalValidations.validate({
-      name: formData.name.trim(),
-      targetAmount: Number(formData.targetAmount),
-      currentAmount: 0,
-      targetDate: formData.deadline ? new Date(formData.deadline) : new Date(),
-    });
-
-    if (!validation.isValid) {
-      setValidationErrors(validation.errors);
-      showToast.error("Por favor, corrija os erros no formulário");
-      return;
-    }
-
+  const onSubmit = async (data: CreateGoalInput) => {
     try {
-      setIsSubmitting(true);
-
-      const data: CreateGoalData = {
-        name: formData.name.trim(),
-        targetAmount: formData.targetAmount,
-        deadline: formData.deadline || undefined,
-        icon: formData.icon,
-        color: formData.color,
+      const goalData = {
+        name: data.name.trim(),
+        targetAmount: data.targetAmount.toString(),
+        deadline: data.deadline ? new Date(data.deadline).toISOString().split("T")[0] : undefined,
+        icon: data.icon,
+        color: data.color,
       };
 
       if (goal) {
-        await goalService.updateGoal({ ...data, id: goal.id });
+        await goalService.updateGoal({ ...goalData, id: goal.id });
         showToast.success(toastMessages.goals.updated);
       } else {
-        await goalService.createGoal(data);
+        await goalService.createGoal(goalData);
         showToast.success(toastMessages.goals.created);
       }
 
       onSave();
       onClose();
+      reset();
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : toastMessages.goals.error;
-      setError(errorMessage);
       showToast.error(errorMessage);
-    } finally {
-      setIsSubmitting(false);
     }
   };
 
-  const getErrorMessage = (field: string): string | undefined => {
-    const error = validationErrors.find((e) => e.field === field);
-    return error?.message;
-  };
-
-  const hasError = (field: string): boolean => {
-    return validationErrors.some((e) => e.field === field);
+  const handleClose = () => {
+    reset();
+    onClose();
   };
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 dark:bg-black/95"
-      style={{ margin: 0 }}
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-md"
+      onClick={(e) => e.target === e.currentTarget && handleClose()}
     >
-      <div
-        className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 max-w-lg w-full max-h-[90vh] overflow-y-auto shadow-2xl"
-        style={{ margin: 0 }}
-      >
+      <div className="bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-neutral-200 dark:border-neutral-800">
-          <h2 className="text-xl font-bold">{goal ? "Editar Meta" : "Nova Meta"}</h2>
+          <h2 className="text-xl font-semibold text-neutral-900 dark:text-white">
+            {goal ? "Editar Meta" : "Nova Meta"}
+          </h2>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-2 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded-lg transition-colors"
           >
             <X className="h-5 w-5 text-neutral-600 dark:text-neutral-400" />
@@ -133,131 +129,156 @@ export function GoalModal({ goal, onClose, onSave }: GoalModalProps) {
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6">
-          <div className="space-y-4">
-            {error && (
-              <div className="p-3 bg-red-500/10 border border-red-500/20 rounded-lg text-red-600 dark:text-red-400 text-sm">
-                {error}
-              </div>
-            )}
-
+        <form onSubmit={handleSubmit(onSubmit)} className="p-6 space-y-6">
+          {/* Grid 2 colunas - Nome e Valor Alvo */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* Nome */}
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                Nome da Meta
-              </label>
-              <Input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Ex: Viagem para Europa"
-                required
-                className={hasError("Nome") ? "border-red-500 dark:border-red-500" : ""}
-              />
-              {hasError("Nome") && (
-                <p className="text-xs text-red-500 mt-1">{getErrorMessage("Nome")}</p>
-              )}
-            </div>
+            <FormInput
+              label="Nome da Meta"
+              {...register("name")}
+              error={errors.name}
+              placeholder="Ex: Viagem para Europa"
+              required
+            />
 
             {/* Valor Alvo */}
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                Valor Alvo
-              </label>
-              <Input
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.targetAmount}
-                onChange={(e) => setFormData({ ...formData, targetAmount: e.target.value })}
-                placeholder="0,00"
-                required
-                className={hasError("Valor alvo") ? "border-red-500 dark:border-red-500" : ""}
-              />
-              {hasError("Valor alvo") && (
-                <p className="text-xs text-red-500 mt-1">{getErrorMessage("Valor alvo")}</p>
-              )}
-            </div>
+            <FormInput
+              label="Valor Alvo"
+              type="number"
+              step="0.01"
+              min="0"
+              {...register("targetAmount", { valueAsNumber: true })}
+              error={errors.targetAmount}
+              placeholder="0,00"
+              required
+            />
+          </div>
 
-            {/* Prazo (opcional) */}
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                Prazo (opcional)
-              </label>
-              <Input
-                type="date"
-                value={formData.deadline}
-                onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
-                onClick={(e) => (e.target as HTMLInputElement).showPicker?.()}
-                className={hasError("Data alvo") ? "border-red-500 dark:border-red-500" : ""}
-              />
-              {hasError("Data alvo") && (
-                <p className="text-xs text-red-500 mt-1">{getErrorMessage("Data alvo")}</p>
-              )}
-            </div>
+          {/* Prazo */}
+          <FormInput
+            label="Prazo (opcional)"
+            type="date"
+            {...register("deadline", {
+              setValueAs: (value) => value ? new Date(value + "T12:00:00") : undefined,
+            })}
+            error={errors.deadline}
+          />
 
-            {/* Ícone */}
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                Ícone
-              </label>
-              <div className="grid grid-cols-6 gap-2">
-                {GOAL_ICONS.map((icon) => (
-                  <button
-                    key={icon}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, icon })}
-                    className={`p-3 rounded-lg text-2xl transition-all ${
-                      formData.icon === icon
-                        ? "bg-blue-100 dark:bg-blue-900/30 border-2 border-blue-500 scale-110"
-                        : "bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-700"
-                    }`}
-                  >
-                    {icon}
-                  </button>
-                ))}
+          {/* Ícone */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-3">
+              Ícone
+            </label>
+            <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-12 gap-2">
+              {GOAL_ICONS.map((icon) => (
+                <button
+                  key={icon}
+                  type="button"
+                  onClick={() => setValue("icon", icon)}
+                  className={`p-2 rounded-lg text-2xl transition-all hover:scale-110 flex items-center justify-center aspect-square ${
+                    selectedIcon === icon
+                      ? "bg-blue-100 dark:bg-blue-900/30 border-2 border-blue-500 scale-105"
+                      : "bg-neutral-100 dark:bg-neutral-800 border border-neutral-200 dark:border-neutral-700 hover:bg-neutral-200 dark:hover:bg-neutral-700"
+                  }`}
+                  aria-label={`Ícone ${icon}`}
+                >
+                  {icon}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Cor */}
+          <div>
+            <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-3">
+              Cor
+            </label>
+            <div className="grid grid-cols-6 sm:grid-cols-8 md:grid-cols-12 gap-2">
+              {GOAL_COLORS.map((color) => (
+                <button
+                  key={color}
+                  type="button"
+                  onClick={() => setValue("color", color)}
+                  className={`h-10 rounded-lg transition-all hover:scale-110 ${
+                    selectedColor === color
+                      ? "ring-2 ring-offset-2 ring-offset-white dark:ring-offset-neutral-900 scale-105"
+                      : ""
+                  }`}
+                  style={{ backgroundColor: color }}
+                  title={color}
+                  aria-label={`Cor ${color}`}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Preview da Meta */}
+          <div className="p-5 rounded-lg bg-gradient-to-br from-neutral-50 to-neutral-100 dark:from-neutral-800 dark:to-neutral-900 border border-neutral-200 dark:border-neutral-700">
+            <div className="flex items-center gap-2 mb-3">
+              <Target className="w-4 h-4 text-neutral-600 dark:text-neutral-400" />
+              <p className="text-xs font-medium text-neutral-600 dark:text-neutral-400">
+                Pré-visualização
+              </p>
+            </div>
+            
+            <div className="flex items-start gap-4">
+              {/* Ícone */}
+              <div
+                className="w-14 h-14 rounded-full flex items-center justify-center text-3xl flex-shrink-0 transition-all"
+                style={{ 
+                  backgroundColor: `${selectedColor}20`, 
+                  color: selectedColor 
+                }}
+              >
+                {selectedIcon}
               </div>
-            </div>
 
-            {/* Cor */}
-            <div>
-              <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-                Cor
-              </label>
-              <div className="grid grid-cols-6 gap-2">
-                {GOAL_COLORS.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    onClick={() => setFormData({ ...formData, color })}
-                    className={`h-10 rounded-lg transition-all ${
-                      formData.color === color
-                        ? "ring-2 ring-offset-2 ring-offset-white dark:ring-offset-neutral-900 scale-110"
-                        : "hover:scale-105"
-                    }`}
-                    style={{
-                      backgroundColor: color,
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-neutral-900 dark:text-white mb-1 truncate">
+                  {watchedName || "Nome da Meta"}
+                </h3>
+                
+                <div className="flex items-baseline gap-2 mb-2">
+                  <span className="text-sm text-neutral-600 dark:text-neutral-400">
+                    R$ {(watchedCurrentAmount || 0).toFixed(2).replace('.', ',')}
+                  </span>
+                  <span className="text-xs text-neutral-500 dark:text-neutral-500">
+                    de R$ {watchedTargetAmount.toFixed(2).replace('.', ',')}
+                  </span>
+                </div>
+
+                {/* Progress bar */}
+                <div className="w-full bg-neutral-200 dark:bg-neutral-700 rounded-full h-2 overflow-hidden">
+                  <div
+                    className="h-full transition-all duration-300 rounded-full"
+                    style={{ 
+                      width: `${progress}%`,
+                      backgroundColor: selectedColor
                     }}
                   />
-                ))}
+                </div>
+                
+                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-1">
+                  {progress.toFixed(1)}% concluído
+                </p>
               </div>
             </div>
+          </div>
 
-            {/* Buttons */}
-            <div className="flex gap-3 pt-4">
-              <Button
-                type="button"
-                variant="secondary"
-                onClick={onClose}
-                className="flex-1"
-                disabled={isSubmitting}
-              >
-                Cancelar
-              </Button>
-              <Button type="submit" variant="primary" className="flex-1" disabled={isSubmitting}>
-                {isSubmitting ? "Salvando..." : goal ? "Atualizar" : "Criar Meta"}
-              </Button>
-            </div>
+          {/* Actions */}
+          <div className="flex justify-end gap-3 pt-4">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={handleClose}
+              disabled={isSubmitting}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? "Salvando..." : goal ? "Atualizar" : "Criar Meta"}
+            </Button>
           </div>
         </form>
       </div>

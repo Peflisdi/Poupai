@@ -41,7 +41,7 @@ export function TransactionModal({
 
   // Checkbox MARCADO por padrão para parcelas (comportamento esperado)
   const [updateAllInstallments, setUpdateAllInstallments] = useState(isInstallment);
-  
+
   // Person modal states
   const [isPersonModalOpen, setIsPersonModalOpen] = useState(false);
 
@@ -108,7 +108,13 @@ export function TransactionModal({
     }
   }, [isOpen, transaction, categories, reset, isInstallment]);
 
-  const handleCreatePerson = async (personData: { name: string; email?: string; phone?: string; notes?: string; color?: string }) => {
+  const handleCreatePerson = async (personData: {
+    name: string;
+    email?: string;
+    phone?: string;
+    notes?: string;
+    color?: string;
+  }) => {
     try {
       const newPerson = await createPerson(personData);
       if (newPerson) {
@@ -329,16 +335,16 @@ export function TransactionModal({
               </Button>
             </div>
             <div className="relative">
-              {watch("paidBy") && people.find(p => p.name === watch("paidBy")) && (
+              {watch("paidBy") && people.find((p) => p.name === watch("paidBy")) && (
                 <div
                   className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 rounded-full z-10 pointer-events-none"
-                  style={{ backgroundColor: people.find(p => p.name === watch("paidBy"))?.color }}
+                  style={{ backgroundColor: people.find((p) => p.name === watch("paidBy"))?.color }}
                 />
               )}
               <select
                 {...register("paidBy")}
                 className={`w-full px-4 py-2 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-transparent outline-none transition-all ${
-                  watch("paidBy") && people.find(p => p.name === watch("paidBy")) ? "pl-9" : ""
+                  watch("paidBy") && people.find((p) => p.name === watch("paidBy")) ? "pl-9" : ""
                 } ${errors.paidBy ? "border-red-500" : ""}`}
               >
                 <option value="">Selecione uma pessoa</option>
@@ -352,16 +358,11 @@ export function TransactionModal({
                 <p className="text-sm text-red-500 mt-1">{errors.paidBy.message}</p>
               )}
             </div>
+            <p className="text-xs text-neutral-500 dark:text-neutral-400">
+              💡 Use este campo quando outra pessoa usar seu cartão/dinheiro. Acompanhe os gastos
+              por pessoa na página de Relatórios.
+            </p>
           </div>
-
-          {/* Reembolsado */}
-          {watch("paidBy") && (
-            <FormCheckbox
-              label="Já foi reembolsado"
-              {...register("isReimbursed")}
-              error={errors.isReimbursed}
-            />
-          )}
 
           {/* Actions */}
           <div className="flex justify-end gap-3 pt-4">

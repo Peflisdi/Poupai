@@ -44,20 +44,29 @@ export async function GET(request: Request) {
       const cardsWithTransactions = await Promise.all(
         cards.map(async (card) => {
           // ===== CALCULAR PERÍODO DA FATURA ATUAL =====
-          // Compras NO DIA de fechamento já vão para próxima fatura
+          // LÓGICA: Se já passou do dia de VENCIMENTO, mostramos a PRÓXIMA fatura
+          // Exemplo: Se vence dia 10 e hoje é dia 28, já pagamos a fatura de outubro, mostrar novembro
           let startDate: Date;
           let endDate: Date;
 
-          if (currentDay < card.closingDay) {
+          // Verificar se já passou do vencimento deste mês
+          const alreadyPaid = currentDay > card.dueDay;
+
+          if (alreadyPaid) {
+            // Já passou do vencimento → mostrar PRÓXIMA fatura
+            // Fatura vence no próximo mês
+            startDate = new Date(currentYear, currentMonth, card.closingDay, 0, 0, 0, 0);
+            endDate = new Date(currentYear, currentMonth + 1, card.closingDay - 1, 23, 59, 59, 999);
+          } else if (currentDay < card.closingDay) {
             // Ainda não chegou no dia de fechamento
             // Fatura vence este mês, período: dia X do mês passado até dia (X-1) deste mês
             startDate = new Date(currentYear, currentMonth - 1, card.closingDay, 0, 0, 0, 0);
             endDate = new Date(currentYear, currentMonth, card.closingDay - 1, 23, 59, 59, 999);
           } else {
-            // Já chegou no dia de fechamento (ou passou)
-            // Fatura vence próximo mês, período: dia X deste mês até dia (X-1) do próximo mês
-            startDate = new Date(currentYear, currentMonth, card.closingDay, 0, 0, 0, 0);
-            endDate = new Date(currentYear, currentMonth + 1, card.closingDay - 1, 23, 59, 59, 999);
+            // Já chegou no dia de fechamento mas ainda não venceu
+            // Fatura vence este mês, período: dia X do mês passado até dia (X-1) deste mês
+            startDate = new Date(currentYear, currentMonth - 1, card.closingDay, 0, 0, 0, 0);
+            endDate = new Date(currentYear, currentMonth, card.closingDay - 1, 23, 59, 59, 999);
           }
 
           // Buscar transações do período
@@ -75,9 +84,74 @@ export async function GET(request: Request) {
             },
           });
 
+          // ===== CALCULAR LIMITE DISPONÍVEL CORRETAMENTE =====
+          // Precisamos considerar TODAS as parcelas futuras, não só o mês atual
+          // Exemplo: Compra de R$1200 em 12x = R$100/mês deve reservar R$1200 do limite
+
+          // 1. Buscar todas as compras parceladas ATIVAS deste cartão
+          const installmentPurchases = await prisma.installmentPurchase.findMany({
+            where: {
+              userId: user.id,
+              transactions: {
+                some: {
+                  cardId: card.id,
+                },
+              },
+            },
+            include: {
+              transactions: {
+                where: {
+                  cardId: card.id,
+                },
+              },
+            },
+          });
+
+          // 2. Calcular total comprometido com parcelas futuras
+          let totalCommitted = 0;
+
+          for (const purchase of installmentPurchases) {
+            // Somar TODAS as parcelas (presente + futuras)
+            const totalInstallments = purchase.transactions.reduce((sum, t) => {
+              return sum + Number(t.amount);
+            }, 0);
+            totalCommitted += totalInstallments;
+          }
+
+          // 3. Buscar transações avulsas futuras (não parceladas) no cartão
+          const futureTransactions = await prisma.transaction.findMany({
+            where: {
+              cardId: card.id,
+              userId: user.id,
+              installmentPurchaseId: null, // Apenas não parceladas
+              date: {
+                gt: now, // Futuras
+              },
+            },
+          });
+
+          totalCommitted += futureTransactions.reduce((sum, t) => {
+            return sum + Number(t.amount);
+          }, 0);
+
+          // 4. Calcular fatura atual (sem contar parcelas, pois já estão em totalCommitted)
+          const currentBillAmount = transactions.reduce((sum, t) => {
+            // Não somar parcelas aqui (já contabilizadas em totalCommitted)
+            if (t.installmentPurchaseId) return sum;
+            return sum + Number(t.amount);
+          }, 0);
+
+          const availableLimit = card.limit - totalCommitted;
+          const usagePercentage = (totalCommitted / card.limit) * 100;
+
           return {
             ...card,
             transactions,
+            // Novos campos calculados
+            currentBill: currentBillAmount,
+            totalCommitted, // Total incluindo parcelas futuras
+            availableLimit,
+            usagePercentage,
           };
         })
       );
