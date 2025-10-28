@@ -34,6 +34,7 @@ model User {
   installmentPurchases InstallmentPurchase[]
   loans                Loan[]
   people               Person[] // Pessoas cadastradas pelo usuário
+  subscriptions        Subscription[] // Assinaturas/Gastos recorrentes
 
   @@map("users")
 }
@@ -115,6 +116,7 @@ model Category {
   subcategories        Category[]            @relation("Subcategories")
   transactions         Transaction[]
   installmentPurchases InstallmentPurchase[]
+  subscriptions        Subscription[] // Assinaturas usando esta categoria
 
   @@map("categories")
 }
@@ -168,6 +170,7 @@ model Card {
   user                 User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
   transactions         Transaction[]
   installmentPurchases InstallmentPurchase[]
+  subscriptions        Subscription[] // Assinaturas usando este cartão
 
   @@map("cards")
 }
@@ -261,4 +264,32 @@ model GoalDeposit {
   goal Goal @relation(fields: [goalId], references: [id], onDelete: Cascade)
 
   @@map("goal_deposits")
+}
+
+// ===== SUBSCRIPTIONS (Assinaturas/Gastos Recorrentes) =====
+model Subscription {
+  id              String   @id @default(cuid())
+  name            String // Nome da assinatura (ex: "Netflix", "Spotify", "Aluguel")
+  description     String? // Descrição opcional
+  amount          Float // Valor da assinatura
+  frequency       String // MONTHLY, YEARLY, WEEKLY, CUSTOM
+  customDays      Int? // Para frequency CUSTOM - a cada X dias
+  startDate       DateTime // Data de início
+  nextBillingDate DateTime // Próxima data de cobrança
+  categoryId      String? // Categoria associada (opcional)
+  cardId          String? // Cartão associado (opcional)
+  paymentMethod   String   @default("PIX") // PIX, CASH, DEBIT, CREDIT, TRANSFER
+  isActive        Boolean  @default(true) // Se está ativa ou pausada
+  autoGenerate    Boolean  @default(true) // Se deve gerar transações automaticamente
+  userId          String
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  category Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  card     Card?     @relation(fields: [cardId], references: [id], onDelete: SetNull)
+
+  @@index([userId, isActive])
+  @@index([nextBillingDate, isActive, autoGenerate]) // Para buscar assinaturas que precisam gerar transação
+  @@map("subscriptions")
 }
