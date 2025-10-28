@@ -190,3 +190,53 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+// PATCH - Atualização parcial (para marcar como reembolsado, etc)
+export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+  try {
+    const session = await getServerSession(authOptions);
+
+    if (!session || !session.user?.email) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+    });
+
+    if (!user) {
+      return NextResponse.json({ error: "User not found" }, { status: 404 });
+    }
+
+    const body = await request.json();
+
+    // Verificar se a transação existe e pertence ao usuário
+    const existingTransaction = await prisma.transaction.findFirst({
+      where: {
+        id: params.id,
+        userId: user.id,
+      },
+    });
+
+    if (!existingTransaction) {
+      return NextResponse.json({ error: "Transaction not found" }, { status: 404 });
+    }
+
+    // Atualizar apenas os campos fornecidos
+    const transaction = await prisma.transaction.update({
+      where: {
+        id: params.id,
+      },
+      data: body,
+      include: {
+        category: true,
+        card: true,
+      },
+    });
+
+    return NextResponse.json(transaction);
+  } catch (error) {
+    console.error("Patch transaction error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
+}

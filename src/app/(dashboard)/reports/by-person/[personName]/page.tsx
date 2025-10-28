@@ -17,6 +17,8 @@ import {
   ChevronUp,
   HandCoins,
   TrendingUp,
+  Check,
+  X,
 } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 import { showToast } from "@/lib/toast";
@@ -187,6 +189,28 @@ export default function PersonDetailPage() {
     } catch (error) {
       console.error("Erro ao gerar PDF:", error);
       showToast.error("Erro ao gerar PDF. Tente novamente.");
+    }
+  };
+
+  const toggleReimbursed = async (transactionId: string, currentStatus: boolean) => {
+    try {
+      const response = await fetch(`/api/transactions/${transactionId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isReimbursed: !currentStatus }),
+      });
+
+      if (!response.ok) throw new Error("Erro ao atualizar status");
+
+      showToast.success(
+        !currentStatus ? "Marcado como reembolsado!" : "Marcado como pendente!"
+      );
+
+      // Recarregar dados
+      fetchDetailData();
+    } catch (error) {
+      console.error("Erro ao atualizar status:", error);
+      showToast.error("Erro ao atualizar status. Tente novamente.");
     }
   };
 
@@ -453,7 +477,7 @@ export default function PersonDetailPage() {
                           {bill.transactions.map((transaction) => (
                             <div
                               key={transaction.id}
-                              className="flex items-center justify-between p-4 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800"
+                              className="flex items-center justify-between p-4 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:border-purple-300 dark:hover:border-purple-700 transition-colors"
                             >
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1.5">
@@ -484,9 +508,32 @@ export default function PersonDetailPage() {
                                   )}
                                 </div>
                               </div>
-                              <span className="font-bold text-lg text-neutral-900 dark:text-white ml-4">
-                                {formatCurrency(transaction.amount)}
-                              </span>
+                              <div className="flex items-center gap-3 ml-4">
+                                <span className="font-bold text-lg text-neutral-900 dark:text-white">
+                                  {formatCurrency(transaction.amount)}
+                                </span>
+                                <button
+                                  onClick={() =>
+                                    toggleReimbursed(transaction.id, transaction.isReimbursed)
+                                  }
+                                  className={`p-2 rounded-lg transition-all ${
+                                    transaction.isReimbursed
+                                      ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50"
+                                      : "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-900/50"
+                                  }`}
+                                  title={
+                                    transaction.isReimbursed
+                                      ? "Marcar como pendente"
+                                      : "Marcar como reembolsado"
+                                  }
+                                >
+                                  {transaction.isReimbursed ? (
+                                    <X className="h-4 w-4" />
+                                  ) : (
+                                    <Check className="h-4 w-4" />
+                                  )}
+                                </button>
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -547,7 +594,7 @@ export default function PersonDetailPage() {
                     {detailData.directTransactions.map((transaction) => (
                       <div
                         key={transaction.id}
-                        className="flex items-center justify-between p-4 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800"
+                        className="flex items-center justify-between p-4 bg-white dark:bg-neutral-900 rounded-xl border border-neutral-200 dark:border-neutral-800 hover:border-green-300 dark:hover:border-green-700 transition-colors"
                       >
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1.5">
@@ -576,9 +623,32 @@ export default function PersonDetailPage() {
                             )}
                           </div>
                         </div>
-                        <span className="font-bold text-lg text-neutral-900 dark:text-white ml-4">
-                          {formatCurrency(transaction.amount)}
-                        </span>
+                        <div className="flex items-center gap-3 ml-4">
+                          <span className="font-bold text-lg text-neutral-900 dark:text-white">
+                            {formatCurrency(transaction.amount)}
+                          </span>
+                          <button
+                            onClick={() =>
+                              toggleReimbursed(transaction.id, transaction.isReimbursed)
+                            }
+                            className={`p-2 rounded-lg transition-all ${
+                              transaction.isReimbursed
+                                ? "bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-900/50"
+                                : "bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 hover:bg-orange-200 dark:hover:bg-orange-900/50"
+                            }`}
+                            title={
+                              transaction.isReimbursed
+                                ? "Marcar como pendente"
+                                : "Marcar como reembolsado"
+                            }
+                          >
+                            {transaction.isReimbursed ? (
+                              <X className="h-4 w-4" />
+                            ) : (
+                              <Check className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
