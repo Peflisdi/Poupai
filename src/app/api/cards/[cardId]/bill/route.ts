@@ -62,14 +62,14 @@ export async function GET(request: Request, { params }: { params: { cardId: stri
       // Usuário selecionou um mês específico (ex: "2025-10" = outubro)
       const [year, monthNum] = month.split("-").map(Number);
 
-      // Usar função que considera finais de semana
-      const period = getBillPeriodByMonth(card.closingDay, year, monthNum);
+      // Usar função que considera finais de semana E o dia de vencimento
+      const period = getBillPeriodByMonth(card.closingDay, card.dueDay, year, monthNum);
       startDate = period.startDate;
       endDate = period.endDate;
     } else {
       // Buscar fatura ATUAL (não foi especificado mês)
-      // Usar função que considera finais de semana
-      const period = getCurrentBillPeriod(card.closingDay);
+      // Usar função que considera finais de semana E o dia de vencimento
+      const period = getCurrentBillPeriod(card.closingDay, card.dueDay);
       startDate = period.startDate;
       endDate = period.endDate;
     }
