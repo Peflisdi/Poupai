@@ -25,6 +25,9 @@ import type { Person } from "@/types";
 
 interface PersonReport {
   personName: string;
+  personColor?: string;
+  personEmail?: string | null;
+  personPhone?: string | null;
   total: number;
   totalPending: number;
   totalReimbursed: number;
@@ -356,15 +359,29 @@ export default function ReportsByPersonPage() {
               {/* Header do Card */}
               <div className="flex items-start justify-between mb-4">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white font-bold text-lg">
+                  <div className="flex items-center gap-3 mb-1">
+                    <div
+                      className="w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-lg shadow-md"
+                      style={{
+                        backgroundColor: person.personColor || "#8B5CF6",
+                      }}
+                    >
                       {person.personName.charAt(0).toUpperCase()}
                     </div>
-                    <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
-                      {person.personName}
-                    </h3>
+                    <div>
+                      <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
+                        {person.personName}
+                      </h3>
+                      {(person.personEmail || person.personPhone) && (
+                        <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                          {person.personEmail && `📧 ${person.personEmail}`}
+                          {person.personEmail && person.personPhone && " • "}
+                          {person.personPhone && `📱 ${person.personPhone}`}
+                        </p>
+                      )}
+                    </div>
                   </div>
-                  <p className="text-sm text-neutral-600 dark:text-neutral-400">
+                  <p className="text-sm text-neutral-600 dark:text-neutral-400 ml-13">
                     {person.transactionCount} transação{person.transactionCount !== 1 ? "ões" : ""}
                   </p>
                 </div>

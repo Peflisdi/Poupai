@@ -14,16 +14,24 @@ import { Button } from "@/components/ui/Button";
 import { LoanModal } from "@/components/loans/LoanModal";
 import { PaymentModal } from "@/components/loans/PaymentModal";
 import { useLoans } from "@/hooks/useLoans";
+import { usePeople } from "@/hooks/usePeople";
 import { loanService, Loan, CreateLoanData, CreatePaymentData } from "@/services/loanService";
 import { showToast } from "@/lib/toast";
 
 export default function LoansPage() {
   const [activeTab, setActiveTab] = useState<"LENT" | "BORROWED">("LENT");
   const { loans, isLoading, refetch } = useLoans(activeTab);
+  const { people } = usePeople();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
   const [selectedLoanForPayment, setSelectedLoanForPayment] = useState<Loan | null>(null);
+
+  // Helper function to get person color
+  const getPersonColor = (personName: string) => {
+    const person = people.find((p) => p.name === personName);
+    return person?.color || "#8B5CF6";
+  };
 
   const handleCreateLoan = async (data: CreateLoanData) => {
     try {
@@ -255,7 +263,15 @@ export default function LoansPage() {
                   >
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-1">
+                        <div className="flex items-center gap-3 mb-1">
+                          <div
+                            className="w-8 h-8 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-md"
+                            style={{
+                              backgroundColor: getPersonColor(loan.personName),
+                            }}
+                          >
+                            {loan.personName.charAt(0).toUpperCase()}
+                          </div>
                           <h3 className="font-semibold text-neutral-900 dark:text-white">
                             {loan.personName}
                           </h3>

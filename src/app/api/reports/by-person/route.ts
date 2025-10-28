@@ -96,6 +96,9 @@ export async function GET(request: Request) {
       string,
       {
         personName: string;
+        personColor?: string;
+        personEmail?: string | null;
+        personPhone?: string | null;
         total: number;
         totalPending: number;
         totalReimbursed: number;
@@ -104,12 +107,29 @@ export async function GET(request: Request) {
       }
     > = {};
 
-    transactions.forEach((transaction) => {
+    // Buscar todas as pessoas do usuário para adicionar informações extras
+    const people = await prisma.person.findMany({
+      where: { userId: user.id, isActive: true },
+      select: {
+        name: true,
+        color: true,
+        email: true,
+        phone: true,
+      },
+    });
+
+    const peopleMap = new Map(people.map((p) => [p.name, p]));
+
+    filteredTransactions.forEach((transaction) => {
       const personName = transaction.paidBy!;
+      const personData = peopleMap.get(personName);
 
       if (!groupedByPerson[personName]) {
         groupedByPerson[personName] = {
           personName,
+          personColor: personData?.color,
+          personEmail: personData?.email,
+          personPhone: personData?.phone,
           total: 0,
           totalPending: 0,
           totalReimbursed: 0,
