@@ -2,26 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-
-// Função helper para determinar o mês da fatura de uma transação de cartão
-function getBillMonth(transactionDate: Date, closingDay: number): Date {
-  const transDay = transactionDate.getDate();
-  let billMonth = transactionDate.getMonth();
-  let billYear = transactionDate.getFullYear();
-
-  // Se a compra foi ANTES do dia de fechamento, vai para a fatura DESTE mês
-  // Se a compra foi NO DIA ou DEPOIS do fechamento, vai para a fatura do PRÓXIMO mês
-  if (transDay >= closingDay) {
-    billMonth += 1;
-    if (billMonth > 11) {
-      billMonth = 0;
-      billYear += 1;
-    }
-  }
-  // Se foi antes do fechamento, mantém o mês atual
-
-  return new Date(billYear, billMonth, 1);
-}
+import { getCurrentBillPeriod } from "@/lib/cardUtils";
 
 export async function GET(req: NextRequest) {
   try {
@@ -66,6 +47,7 @@ export async function GET(req: NextRequest) {
             name: true,
             color: true,
             closingDay: true,
+            dueDay: true,
           },
         },
       },
@@ -99,8 +81,15 @@ export async function GET(req: NextRequest) {
     // Filtrar transações considerando o ciclo de faturamento
     const transactions = allTransactions.filter((transaction) => {
       if (transaction.cardId && transaction.card) {
-        // Para transações de cartão, calcular qual fatura vai aparecer
-        const billMonth = getBillMonth(new Date(transaction.date), transaction.card.closingDay);
+        // Para transações de cartão, calcular qual fatura vai aparecer usando a função correta
+        const billPeriod = getCurrentBillPeriod(
+          transaction.card.closingDay,
+          transaction.card.dueDay,
+          new Date(transaction.date)
+        );
+
+        // Criar data do mês de vencimento para comparação
+        const billMonth = new Date(billPeriod.dueYear, billPeriod.dueMonth - 1, 1);
 
         // Verificar se a fatura está no período selecionado
         return billMonth >= startDate && billMonth <= endDate;
@@ -138,11 +127,14 @@ export async function GET(req: NextRequest) {
     >();
 
     cardTransactions.forEach((transaction) => {
-      const billMonth = getBillMonth(new Date(transaction.date), transaction.card!.closingDay);
-      const billMonthStr = `${billMonth.getFullYear()}-${String(billMonth.getMonth() + 1).padStart(
-        2,
-        "0"
-      )}`;
+      // Calcular o período da fatura usando a função correta
+      const billPeriod = getCurrentBillPeriod(
+        transaction.card!.closingDay,
+        transaction.card!.dueDay,
+        new Date(transaction.date)
+      );
+      
+      const billMonthStr = `${billPeriod.dueYear}-${String(billPeriod.dueMonth).padStart(2, "0")}`;
       const key = `${transaction.cardId}-${billMonthStr}`;
 
       if (!cardBillsMap.has(key)) {

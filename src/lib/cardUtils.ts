@@ -27,10 +27,10 @@ export function getActualClosingDate(year: number, month: number, closingDay: nu
   // Primeiro, obter o último dia válido do mês
   // Criar data com dia 0 do MÊS SEGUINTE = último dia do mês atual
   const lastDayOfMonth = new Date(year, month + 1, 0).getDate();
-  
+
   // Se o closingDay é maior que os dias do mês, usar o último dia
   const actualDay = Math.min(closingDay, lastDayOfMonth);
-  
+
   const closingDate = new Date(year, month, actualDay);
 
   // Se cai em final de semana, avança para o próximo dia útil
@@ -92,7 +92,7 @@ export function getCurrentBillPeriod(
   // Obter último dia do mês atual (para comparação)
   const lastDayOfCurrentMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
   const actualCurrentClosingDay = Math.min(closingDay, lastDayOfCurrentMonth);
-  
+
   // Data de fechamento do mês atual (sem ajuste de fim de semana)
   const currentMonthClosingDate = new Date(currentYear, currentMonth, actualCurrentClosingDay);
   currentMonthClosingDate.setHours(23, 59, 59, 999);
@@ -117,7 +117,7 @@ export function getCurrentBillPeriod(
   // Calcular mês de vencimento baseado no fechamento
   let dueMonth: number;
   let dueYear: number;
-  
+
   if (dueDay >= closingDay) {
     // Vence no mesmo mês do fechamento
     dueMonth = closingMonth;
@@ -130,11 +130,11 @@ export function getCurrentBillPeriod(
   }
 
   // Calcular período de compras (SEM ajuste de fim de semana)
-  
+
   // Obter último dia do mês de fechamento
   const lastDayOfClosingMonth = new Date(closingYear, closingMonth + 1, 0).getDate();
   const actualClosingDay = Math.min(closingDay, lastDayOfClosingMonth);
-  
+
   const closingDate = new Date(closingYear, closingMonth, actualClosingDay);
   closingDate.setHours(23, 59, 59, 999);
 
@@ -142,11 +142,11 @@ export function getCurrentBillPeriod(
   const prevClosingMonth = closingMonth - 1;
   const prevClosingYear = prevClosingMonth < 0 ? closingYear - 1 : closingYear;
   const prevMonth = prevClosingMonth < 0 ? 11 : prevClosingMonth;
-  
+
   // Obter último dia do mês anterior
   const lastDayOfPrevMonth = new Date(prevClosingYear, prevMonth + 1, 0).getDate();
   const actualPrevClosingDay = Math.min(closingDay, lastDayOfPrevMonth);
-  
+
   const prevClosingDate = new Date(prevClosingYear, prevMonth, actualPrevClosingDay);
 
   // Start date: dia APÓS o fechamento anterior (00:00:00)
@@ -157,11 +157,11 @@ export function getCurrentBillPeriod(
   // End date: dia do fechamento atual (23:59:59)
   const endDate = closingDate;
 
-  return { 
-    startDate, 
+  return {
+    startDate,
     endDate,
     dueMonth: dueMonth + 1, // Retornar 1-12
-    dueYear 
+    dueYear,
   };
 }
 
@@ -169,7 +169,7 @@ export function getCurrentBillPeriod(
  * Calcula o período de uma fatura específica (por mês de vencimento)
  *
  * IMPORTANTE: O mês passado é o mês de VENCIMENTO, não de fechamento!
- * 
+ *
  * Exemplo: Cartão fecha dia 31, vence dia 07
  * - Fatura de NOVEMBRO (vence 07/11) = compras de 01/10 até 31/10
  * - Fatura de DEZEMBRO (vence 07/12) = compras de 01/11 até 30/11
@@ -223,11 +223,11 @@ export function getBillPeriodByMonth(
   const prevClosingMonthIndex = closingMonthIndex - 1;
   const prevClosingYear = prevClosingMonthIndex < 0 ? closingYear - 1 : closingYear;
   const prevClosingMonth = prevClosingMonthIndex < 0 ? 11 : prevClosingMonthIndex;
-  
+
   // Obter último dia do mês anterior
   const lastDayOfPrevMonth = new Date(prevClosingYear, prevClosingMonth + 1, 0).getDate();
   const actualPrevClosingDay = Math.min(closingDay, lastDayOfPrevMonth);
-  
+
   const prevClosingDate = new Date(prevClosingYear, prevClosingMonth, actualPrevClosingDay);
 
   // Start date: dia APÓS o fechamento anterior (00:00:00)
