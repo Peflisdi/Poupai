@@ -3,6 +3,24 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 
+// Função helper para determinar o mês da fatura de uma transação de cartão
+function getBillMonth(transactionDate: Date, closingDay: number): Date {
+  const transDay = transactionDate.getDate();
+  let billMonth = transactionDate.getMonth();
+  let billYear = transactionDate.getFullYear();
+  
+  // Se a compra foi após o dia de fechamento, vai para a próxima fatura
+  if (transDay >= closingDay) {
+    billMonth += 1;
+    if (billMonth > 11) {
+      billMonth = 0;
+      billYear += 1;
+    }
+  }
+  
+  return new Date(billYear, billMonth, 1);
+}
+
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
@@ -33,15 +51,11 @@ export async function GET(req: NextRequest) {
       endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
     }
 
-    // Buscar transações da pessoa no período
-    const transactions = await prisma.transaction.findMany({
+    // Buscar TODAS as transações da pessoa (vamos filtrar depois considerando faturas)
+    const allTransactions = await prisma.transaction.findMany({
       where: {
         userId: session.user.id,
         paidBy: personName,
-        date: {
-          gte: startDate,
-          lte: endDate,
-        },
       },
       include: {
         category: true,
@@ -49,12 +63,28 @@ export async function GET(req: NextRequest) {
           select: {
             name: true,
             color: true,
+            closingDay: true,
           },
         },
       },
       orderBy: {
         date: "desc",
       },
+    });
+
+    // Filtrar transações considerando o ciclo de faturamento
+    const transactions = allTransactions.filter((transaction) => {
+      if (transaction.cardId && transaction.card) {
+        // Para transações de cartão, calcular qual fatura vai aparecer
+        const billMonth = getBillMonth(new Date(transaction.date), transaction.card.closingDay);
+        
+        // Verificar se a fatura está no período selecionado
+        return billMonth >= startDate && billMonth <= endDate;
+      } else {
+        // Para transações normais (PIX, transferência), usar a data real
+        const transDate = new Date(transaction.date);
+        return transDate >= startDate && transDate <= endDate;
+      }
     });
 
     // Calcular totais
@@ -66,7 +96,57 @@ export async function GET(req: NextRequest) {
       .filter((t) => t.isReimbursed)
       .reduce((sum, t) => sum + Number(t.amount), 0);
 
-    // Agrupar por categoria
+    // Separar transações por tipo (cartão vs. gastos diretos)
+    const cardTransactions = transactions.filter((t) => t.cardId);
+    const directTransactions = transactions.filter((t) => !t.cardId);
+
+    // Agrupar transações de cartão por cartão + mês de fatura
+    const cardBillsMap = new Map<
+      string, // key: `${cardId}-${billMonth}`
+      {
+        cardName: string;
+        cardColor: string;
+        closingDay: number;
+        billMonth: string; // "2025-11"
+        transactions: any[];
+        total: number;
+      }
+    >();
+
+    cardTransactions.forEach((transaction) => {
+      const billMonth = getBillMonth(new Date(transaction.date), transaction.card!.closingDay);
+      const billMonthStr = `${billMonth.getFullYear()}-${String(billMonth.getMonth() + 1).padStart(2, "0")}`;
+      const key = `${transaction.cardId}-${billMonthStr}`;
+
+      if (!cardBillsMap.has(key)) {
+        cardBillsMap.set(key, {
+          cardName: transaction.card!.name,
+          cardColor: transaction.card!.color,
+          closingDay: transaction.card!.closingDay,
+          billMonth: billMonthStr,
+          transactions: [],
+          total: 0,
+        });
+      }
+
+      const bill = cardBillsMap.get(key)!;
+      bill.total += Number(transaction.amount);
+      bill.transactions.push({
+        id: transaction.id,
+        description: transaction.description,
+        amount: Number(transaction.amount),
+        date: transaction.date,
+        isReimbursed: transaction.isReimbursed,
+        category: transaction.category,
+      });
+    });
+
+    // Converter faturas de cartão para array
+    const cardBills = Array.from(cardBillsMap.values()).sort((a, b) => 
+      b.billMonth.localeCompare(a.billMonth)
+    );
+
+    // Agrupar por categoria (comportamento original para compatibilidade)
     const categoryMap = new Map<
       string,
       {
@@ -127,6 +207,18 @@ export async function GET(req: NextRequest) {
       totalReimbursed,
       transactionCount: transactions.length,
       categories,
+      // Novos dados para visualização híbrida
+      cardBills, // Faturas de cartão agrupadas por cartão + mês
+      directTransactions: directTransactions.map((t) => ({
+        id: t.id,
+        description: t.description,
+        amount: Number(t.amount),
+        date: t.date,
+        isReimbursed: t.isReimbursed,
+        category: t.category,
+      })),
+      totalCard: cardTransactions.reduce((sum, t) => sum + Number(t.amount), 0),
+      totalDirect: directTransactions.reduce((sum, t) => sum + Number(t.amount), 0),
     });
   } catch (error) {
     console.error("Erro ao buscar detalhes da pessoa:", error);
