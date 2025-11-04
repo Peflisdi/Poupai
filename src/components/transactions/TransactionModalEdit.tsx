@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { X, AlertCircle, UserPlus, Calendar } from "lucide-react";
+import { X, AlertCircle, UserPlus } from "lucide-react";
 import { Transaction, Category } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { FormInput } from "@/components/ui/FormInput";
@@ -18,17 +18,6 @@ import {
   createTransactionSchema,
   type CreateTransactionInput,
 } from "@/lib/validations/transaction";
-
-// Helper para formatar mês em português
-const formatMonthPt = (monthStr: string) => {
-  if (!monthStr) return "";
-  const [year, month] = monthStr.split("-");
-  const months = [
-    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
-    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
-  ];
-  return `${months[parseInt(month) - 1]} ${year}`;
-};
 
 interface TransactionModalProps {
   isOpen: boolean;
@@ -358,28 +347,18 @@ export function TransactionModal({
                   <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
                     Mês da Fatura
                   </label>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-neutral-400 pointer-events-none" />
-                    <select
+                  <div 
+                    className="relative cursor-pointer"
+                    onClick={(e) => {
+                      const input = e.currentTarget.querySelector('input[type="month"]') as HTMLInputElement;
+                      if (input) input.showPicker?.();
+                    }}
+                  >
+                    <input
+                      type="month"
                       {...register("billMonth")}
-                      className="w-full pl-10 pr-4 py-2 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-transparent outline-none transition-all appearance-none"
-                    >
-                      {(() => {
-                        const options = [];
-                        const today = new Date();
-                        // Gerar opções de 2 meses atrás até 6 meses à frente
-                        for (let i = -2; i <= 6; i++) {
-                          const date = new Date(today.getFullYear(), today.getMonth() + i, 1);
-                          const value = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
-                          options.push(
-                            <option key={value} value={value}>
-                              {formatMonthPt(value)}
-                            </option>
-                          );
-                        }
-                        return options;
-                      })()}
-                    </select>
+                      className="w-full px-4 py-2 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-transparent outline-none transition-all cursor-pointer"
+                    />
                   </div>
                   {errors.billMonth && (
                     <p className="text-sm text-red-500 mt-1">{errors.billMonth.message}</p>

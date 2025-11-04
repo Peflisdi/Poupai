@@ -252,11 +252,19 @@ export function TransactionModalCreate({
               <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
                 Mês da Fatura
               </label>
-              <input
-                type="month"
-                {...register("billMonth")}
-                className="w-full px-4 py-2 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-transparent outline-none transition-all"
-              />
+              <div 
+                className="relative cursor-pointer"
+                onClick={(e) => {
+                  const input = e.currentTarget.querySelector('input[type="month"]') as HTMLInputElement;
+                  if (input) input.showPicker?.();
+                }}
+              >
+                <input
+                  type="month"
+                  {...register("billMonth")}
+                  className="w-full px-4 py-2 bg-white dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 rounded-lg focus:ring-2 focus:ring-purple-500 dark:focus:ring-purple-400 focus:border-transparent outline-none transition-all cursor-pointer"
+                />
+              </div>
               {errors.billMonth && (
                 <p className="text-sm text-red-500 mt-1">{errors.billMonth.message}</p>
               )}
