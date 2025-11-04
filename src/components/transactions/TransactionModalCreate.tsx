@@ -1,18 +1,21 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X, UserPlus } from "lucide-react";
 import { Category } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { FormInput } from "@/components/ui/FormInput";
+import { FormCurrencyInput } from "@/components/ui/FormCurrencyInput";
+import { FormDateInput } from "@/components/ui/FormDateInput";
 import { FormSelect } from "@/components/ui/FormSelect";
 import { useCards } from "@/hooks/useCards";
 import { usePeople } from "@/hooks/usePeople";
 import PersonModal from "@/components/people/PersonModal";
 import { showToast } from "@/lib/toast";
 import { suggestBillMonth } from "@/lib/cardUtils";
+import { installmentService } from "@/services/installmentService";
 import {
   createTransactionSchema,
   type CreateTransactionInput,
@@ -36,6 +39,10 @@ export function TransactionModalCreate({
 
   // Person modal states
   const [isPersonModalOpen, setIsPersonModalOpen] = useState(false);
+  
+  // Installment states
+  const [isInstallment, setIsInstallment] = useState(false);
+  const [installments, setInstallments] = useState(2);
 
   const {
     register,
@@ -44,6 +51,7 @@ export function TransactionModalCreate({
     reset,
     watch,
     setValue,
+    control,
   } = useForm<CreateTransactionInput>({
     resolver: zodResolver(createTransactionSchema),
     defaultValues: {
@@ -118,24 +126,44 @@ export function TransactionModalCreate({
 
   const onSubmit = async (data: CreateTransactionInput) => {
     try {
-      const response = await fetch("/api/transactions", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...data,
-          date: data.date.toISOString(),
-        }),
-      });
+      // Se for parcelado, usar API de parcelas
+      if (isInstallment && data.cardId) {
+        await installmentService.createInstallment({
+          description: data.description || "",
+          totalAmount: data.amount,
+          installments: installments,
+          startDate: data.date instanceof Date ? data.date.toISOString() : data.date,
+          categoryId: data.categoryId || undefined,
+          cardId: data.cardId,
+          paidBy: data.paidBy || undefined,
+          isReimbursed: data.isReimbursed,
+        });
+        
+        showToast.success(`Compra parcelada em ${installments}x criada com sucesso!`);
+      } else {
+        // Transação única
+        const response = await fetch("/api/transactions", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            ...data,
+            date: data.date.toISOString(),
+          }),
+        });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.details ? JSON.stringify(error.details) : error.error);
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.details ? JSON.stringify(error.details) : error.error);
+        }
+
+        showToast.success("Transação criada com sucesso!");
       }
-
-      showToast.success("Transação criada com sucesso!");
+      
       await onSave();
       onClose();
       reset();
+      setIsInstallment(false);
+      setInstallments(2);
     } catch (error) {
       console.error("Erro ao criar transação:", error);
       showToast.error("Erro ao criar transação");
@@ -144,6 +172,8 @@ export function TransactionModalCreate({
 
   const handleClose = () => {
     reset();
+    setIsInstallment(false);
+    setInstallments(2);
     onClose();
   };
 
@@ -181,15 +211,20 @@ export function TransactionModalCreate({
               required
             />
 
-            {/* Valor */}
-            <FormInput
-              label="Valor"
-              type="number"
-              step="0.01"
-              {...register("amount", { valueAsNumber: true })}
-              error={errors.amount}
-              placeholder="0,00"
-              required
+            {/* Valor com formatação BRL */}
+            <Controller
+              name="amount"
+              control={control}
+              render={({ field }) => (
+                <FormCurrencyInput
+                  label="Valor"
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  error={errors.amount}
+                  required
+                />
+              )}
             />
           </div>
 
@@ -204,10 +239,9 @@ export function TransactionModalCreate({
 
           {/* Grid de 2 colunas */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Data */}
-            <FormInput
+            {/* Data com calendário clicável */}
+            <FormDateInput
               label="Data"
-              type="date"
               {...register("date", {
                 setValueAs: (value) => (value ? new Date(value + "T12:00:00") : new Date()),
               })}
@@ -246,8 +280,55 @@ export function TransactionModalCreate({
             />
           )}
 
-          {/* Mês da Fatura - só aparece quando tem cartão selecionado */}
+          {/* Parcelamento - só aparece quando tem cartão selecionado */}
           {type === "EXPENSE" && cardId && (
+            <div className="space-y-3 p-4 bg-purple-50 dark:bg-purple-900/10 rounded-lg border border-purple-200 dark:border-purple-800">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={isInstallment}
+                  onChange={(e) => setIsInstallment(e.target.checked)}
+                  className="w-4 h-4 rounded border-purple-300 dark:border-purple-700 text-purple-600 focus:ring-2 focus:ring-purple-500"
+                />
+                <span className="text-sm font-medium text-purple-900 dark:text-purple-100">
+                  💳 Parcelar esta compra
+                </span>
+              </label>
+
+              {isInstallment && (
+                <div className="pl-6 space-y-2">
+                  <div className="flex items-center gap-3">
+                    <label className="text-sm text-purple-800 dark:text-purple-200">
+                      Número de parcelas:
+                    </label>
+                    <select
+                      value={installments}
+                      onChange={(e) => setInstallments(Number(e.target.value))}
+                      className="px-3 py-1 rounded-lg border border-purple-300 dark:border-purple-700 bg-white dark:bg-neutral-800 text-sm focus:ring-2 focus:ring-purple-500"
+                    >
+                      {Array.from({ length: 12 }, (_, i) => i + 2).map((n) => (
+                        <option key={n} value={n}>
+                          {n}x
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <p className="text-xs text-purple-700 dark:text-purple-300">
+                    💡 Cada parcela de{" "}
+                    <strong>
+                      {new Intl.NumberFormat("pt-BR", {
+                        style: "currency",
+                        currency: "BRL",
+                      }).format((watch("amount") || 0) / installments)}
+                    </strong>
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Mês da Fatura - só aparece quando tem cartão selecionado E não é parcelado */}
+          {type === "EXPENSE" && cardId && !isInstallment && (
             <div className="space-y-2">
               <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
                 Mês da Fatura

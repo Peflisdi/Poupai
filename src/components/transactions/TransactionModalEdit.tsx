@@ -1,12 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { X, AlertCircle, UserPlus } from "lucide-react";
 import { Transaction, Category } from "@/types";
 import { Button } from "@/components/ui/Button";
 import { FormInput } from "@/components/ui/FormInput";
+import { FormCurrencyInput } from "@/components/ui/FormCurrencyInput";
+import { FormDateInput } from "@/components/ui/FormDateInput";
 import { FormSelect } from "@/components/ui/FormSelect";
 import { FormCheckbox } from "@/components/ui/FormCheckbox";
 import { useCards } from "@/hooks/useCards";
@@ -53,6 +55,7 @@ export function TransactionModal({
     reset,
     watch,
     setValue,
+    control,
   } = useForm<CreateTransactionInput>({
     resolver: zodResolver(createTransactionSchema),
     defaultValues: {
@@ -291,19 +294,23 @@ export function TransactionModal({
 
           {/* Linha 2: Valor, Data e Categoria */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <FormInput
-              label="Valor (R$)"
-              type="number"
-              step="0.01"
-              {...register("amount", { valueAsNumber: true })}
-              error={errors.amount}
-              placeholder="0,00"
-              required
+            <Controller
+              name="amount"
+              control={control}
+              render={({ field }) => (
+                <FormCurrencyInput
+                  label="Valor"
+                  value={field.value}
+                  onChange={field.onChange}
+                  onBlur={field.onBlur}
+                  error={errors.amount}
+                  required
+                />
+              )}
             />
 
-            <FormInput
+            <FormDateInput
               label="Data"
-              type="date"
               {...register("date", {
                 setValueAs: (value) => (value ? new Date(value + "T12:00:00") : new Date()),
               })}
