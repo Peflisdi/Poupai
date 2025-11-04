@@ -354,10 +354,12 @@ export function TransactionModal({
                   <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
                     Mês da Fatura
                   </label>
-                  <div 
+                  <div
                     className="relative cursor-pointer"
                     onClick={(e) => {
-                      const input = e.currentTarget.querySelector('input[type="month"]') as HTMLInputElement;
+                      const input = e.currentTarget.querySelector(
+                        'input[type="month"]'
+                      ) as HTMLInputElement;
                       if (input) input.showPicker?.();
                     }}
                   >

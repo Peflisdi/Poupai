@@ -39,7 +39,7 @@ export function TransactionModalCreate({
 
   // Person modal states
   const [isPersonModalOpen, setIsPersonModalOpen] = useState(false);
-  
+
   // Installment states
   const [isInstallment, setIsInstallment] = useState(false);
   const [installments, setInstallments] = useState(2);
@@ -128,18 +128,33 @@ export function TransactionModalCreate({
     try {
       // Se for parcelado, usar API de parcelas
       if (isInstallment && data.cardId) {
+        // data.amount já contém o valor POR PARCELA
+        // totalAmount = valor da parcela * número de parcelas
+        const totalAmount = data.amount * installments;
+
         await installmentService.createInstallment({
           description: data.description || "",
-          totalAmount: data.amount,
-          installments: installments,
+          totalAmount: totalAmount, // Total da compra
+          installments: installments, // Número de parcelas
           startDate: data.date instanceof Date ? data.date.toISOString() : data.date,
           categoryId: data.categoryId || undefined,
           cardId: data.cardId,
           paidBy: data.paidBy || undefined,
           isReimbursed: data.isReimbursed,
         });
-        
-        showToast.success(`Compra parcelada em ${installments}x criada com sucesso!`);
+
+        showToast.success(
+          `Compra de ${new Intl.NumberFormat("pt-BR", {
+            style: "currency",
+            currency: "BRL",
+          }).format(totalAmount)} parcelada em ${installments}x de ${new Intl.NumberFormat(
+            "pt-BR",
+            {
+              style: "currency",
+              currency: "BRL",
+            }
+          ).format(data.amount)} criada com sucesso!`
+        );
       } else {
         // Transação única
         const response = await fetch("/api/transactions", {
@@ -158,7 +173,7 @@ export function TransactionModalCreate({
 
         showToast.success("Transação criada com sucesso!");
       }
-      
+
       await onSave();
       onClose();
       reset();
@@ -217,11 +232,12 @@ export function TransactionModalCreate({
               control={control}
               render={({ field }) => (
                 <FormCurrencyInput
-                  label="Valor"
+                  label={isInstallment ? "Valor de cada parcela" : "Valor"}
                   value={field.value}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
                   error={errors.amount}
+                  helperText={isInstallment ? "Digite o valor de UMA parcela" : undefined}
                   required
                 />
               )}
@@ -296,7 +312,7 @@ export function TransactionModalCreate({
               </label>
 
               {isInstallment && (
-                <div className="pl-6 space-y-2">
+                <div className="pl-6 space-y-3">
                   <div className="flex items-center gap-3">
                     <label className="text-sm text-purple-800 dark:text-purple-200">
                       Número de parcelas:
@@ -314,29 +330,40 @@ export function TransactionModalCreate({
                     </select>
                   </div>
                   <p className="text-xs text-purple-700 dark:text-purple-300">
-                    💡 Cada parcela de{" "}
+                    💡 Total:{" "}
                     <strong>
                       {new Intl.NumberFormat("pt-BR", {
                         style: "currency",
                         currency: "BRL",
-                      }).format((watch("amount") || 0) / installments)}
-                    </strong>
+                      }).format((watch("amount") || 0) * installments)}
+                    </strong>{" "}
+                    ({installments} parcelas de{" "}
+                    {new Intl.NumberFormat("pt-BR", {
+                      style: "currency",
+                      currency: "BRL",
+                    }).format(watch("amount") || 0)}
+                    )
+                  </p>
+                  <p className="text-xs text-purple-600 dark:text-purple-400">
+                    ℹ️ Digite o valor de <strong>cada parcela</strong> acima, não o total
                   </p>
                 </div>
               )}
             </div>
           )}
 
-          {/* Mês da Fatura - só aparece quando tem cartão selecionado E não é parcelado */}
-          {type === "EXPENSE" && cardId && !isInstallment && (
+          {/* Mês da Fatura - SEMPRE aparece quando tem cartão selecionado */}
+          {type === "EXPENSE" && cardId && (
             <div className="space-y-2">
               <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300">
                 Mês da Fatura
               </label>
-              <div 
+              <div
                 className="relative cursor-pointer"
                 onClick={(e) => {
-                  const input = e.currentTarget.querySelector('input[type="month"]') as HTMLInputElement;
+                  const input = e.currentTarget.querySelector(
+                    'input[type="month"]'
+                  ) as HTMLInputElement;
                   if (input) input.showPicker?.();
                 }}
               >
@@ -350,8 +377,10 @@ export function TransactionModalCreate({
                 <p className="text-sm text-red-500 mt-1">{errors.billMonth.message}</p>
               )}
               <p className="text-xs text-neutral-500 dark:text-neutral-400">
-                💡 O mês foi sugerido automaticamente baseado na data da compra e no dia de
-                fechamento do cartão. Você pode alterá-lo se necessário.
+                💡{" "}
+                {isInstallment
+                  ? "Escolha o mês da PRIMEIRA parcela. As próximas virão nos meses seguintes."
+                  : "Mês sugerido automaticamente baseado na data e fechamento do cartão."}
               </p>
             </div>
           )}

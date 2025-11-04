@@ -30,10 +30,7 @@ export const FormDateInput = forwardRef<HTMLInputElement, FormDateInputProps>(
           {props.required && <span className="text-red-500 ml-1">*</span>}
         </label>
 
-        <div
-          className="relative cursor-pointer"
-          onClick={handleWrapperClick}
-        >
+        <div className="relative cursor-pointer" onClick={handleWrapperClick}>
           <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-text-tertiary pointer-events-none" />
           <input
             ref={ref}

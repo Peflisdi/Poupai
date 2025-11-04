@@ -20,7 +20,21 @@ interface FormCurrencyInputProps {
  * Uso: <FormCurrencyInput {...register("amount", { valueAsNumber: true })} />
  */
 export const FormCurrencyInput = forwardRef<HTMLInputElement, FormCurrencyInputProps>(
-  ({ label, error, helperText, value = 0, onChange, onBlur, name, required, disabled, className = "" }, ref) => {
+  (
+    {
+      label,
+      error,
+      helperText,
+      value = 0,
+      onChange,
+      onBlur,
+      name,
+      required,
+      disabled,
+      className = "",
+    },
+    ref
+  ) => {
     const errorMessage = typeof error === "string" ? error : error?.message;
     const [displayValue, setDisplayValue] = useState("");
 
@@ -118,9 +132,7 @@ export const FormCurrencyInput = forwardRef<HTMLInputElement, FormCurrencyInputP
         </label>
 
         <div className="relative">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">
-            R$
-          </span>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary">R$</span>
           <input
             ref={ref}
             name={name}
