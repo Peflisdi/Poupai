@@ -58,6 +58,7 @@ export interface Transaction {
   tags: string[];
   paidBy: string | null; // Nome da pessoa que pagou
   isReimbursed: boolean; // Se já foi reembolsado
+  billMonth: string | null; // Mês da fatura (YYYY-MM) - escolhido pelo usuário
   userId: string;
   categoryId: string | null;
   cardId: string | null;

@@ -126,6 +126,7 @@ export async function POST(request: NextRequest) {
         categoryId: data.categoryId || null,
         paymentMethod: "CASH", // Default, pode ser adicionado ao schema depois
         cardId: data.cardId || null,
+        billMonth: data.billMonth || null,
         isRecurring: false, // Default, pode ser adicionado ao schema depois
         recurringPeriod: null,
         paidBy: data.paidBy || null,

@@ -82,18 +82,8 @@ export function CardModalNew({ isOpen, onClose, onSave, card }: CardModalProps) 
 
   const onSubmit = async (data: CreateCardInput) => {
     try {
-      // Validação adicional de datas
-      const dateValidation = validateCardDates({
-        closingDay: data.closingDay,
-        dueDay: data.dueDay,
-      });
-
-      if (!dateValidation.success) {
-        const errorMsg = dateValidation.error || "Erro de validação de datas";
-        setError("dueDay", { message: errorMsg });
-        showToast.error(errorMsg);
-        return;
-      }
+      // Validação de datas removida - agora permitimos qualquer combinação
+      // pois é comum cartões fecharem no final do mês e vencerem no início do próximo
 
       const endpoint = card ? `/api/cards/${card.id}` : "/api/cards";
       const method = card ? "PUT" : "POST";
@@ -206,11 +196,14 @@ export function CardModalNew({ isOpen, onClose, onSave, card }: CardModalProps) 
             />
           </div>
 
-          {/* Alerta sobre datas */}
-          {closingDay && dueDay && dueDay <= closingDay && (
-            <div className="p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg">
-              <p className="text-sm text-orange-800 dark:text-orange-200">
-                ⚠️ O dia de vencimento deve ser após o dia de fechamento
+          {/* Exemplo de ciclo de fatura */}
+          {closingDay && dueDay && (
+            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-lg">
+              <p className="text-sm text-blue-800 dark:text-blue-200">
+                💡 <strong>Exemplo:</strong>{" "}
+                {dueDay < closingDay
+                  ? `Fecha dia ${closingDay}, vence dia ${dueDay} do mês seguinte`
+                  : `Fecha dia ${closingDay}, vence dia ${dueDay} do mesmo mês`}
               </p>
             </div>
           )}

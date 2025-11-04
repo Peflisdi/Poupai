@@ -34,6 +34,11 @@ export const transactionSchema = z.object({
   parentTransactionId: z.string().optional().nullable(),
   paidBy: z.string().max(100, "Nome muito longo").optional().nullable(),
   isReimbursed: z.boolean().default(false),
+  billMonth: z
+    .string()
+    .regex(/^\d{4}-\d{2}$/, "Formato deve ser YYYY-MM")
+    .optional()
+    .nullable(),
 });
 
 /**

@@ -95,6 +95,10 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
         updatableFields.description = body.description;
       }
 
+      if (body.billMonth !== undefined) {
+        updatableFields.billMonth = body.billMonth;
+      }
+
       // Atualizar TODAS as transações do mesmo grupo
       await prisma.transaction.updateMany({
         where: {

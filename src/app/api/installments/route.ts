@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { suggestBillMonth } from "@/lib/cardUtils";
 
 // POST /api/installments - Criar uma compra parcelada
 export async function POST(request: Request) {
@@ -98,6 +99,14 @@ export async function POST(request: Request) {
       return purchase;
     });
 
+    // Buscar informações do cartão para calcular billMonth
+    let card = null;
+    if (cardId) {
+      card = await prisma.card.findUnique({
+        where: { id: cardId },
+      });
+    }
+
     // Criar as transações para cada parcela
     const transactionsData = [];
     const start = new Date(startDate);
@@ -105,6 +114,12 @@ export async function POST(request: Request) {
     for (let i = 0; i < installments; i++) {
       const installmentDate = new Date(start);
       installmentDate.setMonth(installmentDate.getMonth() + i);
+
+      // Calcular billMonth se tiver cartão
+      let billMonth = null;
+      if (card) {
+        billMonth = suggestBillMonth(installmentDate, card.closingDay, card.dueDay);
+      }
 
       transactionsData.push({
         type: "EXPENSE",
@@ -115,6 +130,7 @@ export async function POST(request: Request) {
         userId: session.user.id,
         categoryId: categoryId || null,
         cardId: cardId || null,
+        billMonth: billMonth,
         installmentPurchaseId: installmentPurchase.id,
         installmentNumber: i + 1,
         paidBy: paidBy || null, // Adicionar paidBy

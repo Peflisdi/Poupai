@@ -57,7 +57,7 @@ export async function GET(request: Request) {
         // Para transações de cartão, calcular em qual fatura vai aparecer
         if (transaction.cardId && transaction.card) {
           const transDate = new Date(transaction.date);
-          
+
           // Usar a função correta para calcular o período da fatura
           const billPeriod = getCurrentBillPeriod(
             transaction.card.closingDay,

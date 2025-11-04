@@ -11,6 +11,85 @@ export function isWeekend(date: Date): boolean {
 }
 
 /**
+ * Sugere o mês da fatura com base na data da compra e dia de fechamento
+ * 
+ * NOVA LÓGICA SIMPLIFICADA:
+ * - Usuário escolhe o mês da fatura manualmente
+ * - Esta função apenas SUGERE o mês mais provável
+ * 
+ * Regra simples:
+ * - Se comprou ANTES do fechamento → Fatura do mês atual
+ * - Se comprou DEPOIS do fechamento → Fatura do próximo mês
+ * 
+ * @param purchaseDate - Data da compra
+ * @param closingDay - Dia de fechamento do cartão
+ * @param dueDay - Dia de vencimento do cartão
+ * @returns String no formato YYYY-MM (mês de vencimento sugerido)
+ * 
+ * @example
+ * // Compra dia 15/10, fecha dia 30, vence dia 7
+ * suggestBillMonth(new Date(2025, 9, 15), 30, 7) // "2025-11" (vence em novembro)
+ * 
+ * // Compra dia 31/10, fecha dia 30, vence dia 7  
+ * suggestBillMonth(new Date(2025, 9, 31), 30, 7) // "2025-12" (vence em dezembro)
+ */
+export function suggestBillMonth(
+  purchaseDate: Date,
+  closingDay: number,
+  dueDay: number
+): string {
+  const purchaseDay = purchaseDate.getDate();
+  const purchaseMonth = purchaseDate.getMonth(); // 0-11
+  const purchaseYear = purchaseDate.getFullYear();
+
+  // Obter último dia do mês de compra
+  const lastDayOfMonth = new Date(purchaseYear, purchaseMonth + 1, 0).getDate();
+  const actualClosingDay = Math.min(closingDay, lastDayOfMonth);
+
+  let dueMonth: number;
+  let dueYear: number;
+
+  // Se comprou DEPOIS do fechamento → próxima fatura
+  if (purchaseDay > actualClosingDay) {
+    // Fechou este mês, vai para próxima fatura
+    const nextMonth = purchaseMonth + 1;
+    const closingMonth = nextMonth > 11 ? 0 : nextMonth;
+    const closingYear = nextMonth > 11 ? purchaseYear + 1 : purchaseYear;
+
+    // Calcular mês de vencimento baseado no fechamento
+    if (dueDay < closingDay) {
+      // Vence no mês seguinte ao fechamento
+      dueMonth = closingMonth + 1;
+      dueYear = dueMonth > 11 ? closingYear + 1 : closingYear;
+      dueMonth = dueMonth > 11 ? 0 : dueMonth;
+    } else {
+      // Vence no mesmo mês do fechamento
+      dueMonth = closingMonth;
+      dueYear = closingYear;
+    }
+  } else {
+    // Comprou ANTES do fechamento → fatura atual
+    const closingMonth = purchaseMonth;
+    const closingYear = purchaseYear;
+
+    // Calcular mês de vencimento
+    if (dueDay < closingDay) {
+      // Vence no mês seguinte
+      dueMonth = closingMonth + 1;
+      dueYear = dueMonth > 11 ? closingYear + 1 : closingYear;
+      dueMonth = dueMonth > 11 ? 0 : dueMonth;
+    } else {
+      // Vence no mesmo mês
+      dueMonth = closingMonth;
+      dueYear = closingYear;
+    }
+  }
+
+  // Retornar no formato YYYY-MM
+  return `${dueYear}-${String(dueMonth + 1).padStart(2, "0")}`;
+}
+
+/**
  * Ajusta a data de fechamento para o próximo dia útil, caso caia em final de semana
  *
  * Exemplo:

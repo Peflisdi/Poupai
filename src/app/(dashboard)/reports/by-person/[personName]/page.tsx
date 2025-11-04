@@ -202,9 +202,7 @@ export default function PersonDetailPage() {
 
       if (!response.ok) throw new Error("Erro ao atualizar status");
 
-      showToast.success(
-        !currentStatus ? "Marcado como reembolsado!" : "Marcado como pendente!"
-      );
+      showToast.success(!currentStatus ? "Marcado como reembolsado!" : "Marcado como pendente!");
 
       // Recarregar dados
       fetchDetailData();

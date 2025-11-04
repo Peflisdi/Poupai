@@ -135,6 +135,7 @@ model Transaction {
   tags                  String[] @default([])
   paidBy                String? // Nome da pessoa que pagou (para rastrear gastos de terceiros)
   isReimbursed          Boolean  @default(false) // Se já foi reembolsado
+  billMonth             String? // Mês da fatura (YYYY-MM) - escolhido pelo usuário para transações de cartão
   userId                String
   categoryId            String?
   cardId                String?
@@ -150,6 +151,7 @@ model Transaction {
 
   @@index([userId, date])
   @@index([categoryId])
+  @@index([cardId, billMonth]) // Índice para buscar por fatura
   @@map("transactions")
 }
 

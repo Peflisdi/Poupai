@@ -133,7 +133,7 @@ export async function GET(req: NextRequest) {
         transaction.card!.dueDay,
         new Date(transaction.date)
       );
-      
+
       const billMonthStr = `${billPeriod.dueYear}-${String(billPeriod.dueMonth).padStart(2, "0")}`;
       const key = `${transaction.cardId}-${billMonthStr}`;
 

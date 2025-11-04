@@ -13,6 +13,7 @@ import { useCards } from "@/hooks/useCards";
 import { usePeople } from "@/hooks/usePeople";
 import PersonModal from "@/components/people/PersonModal";
 import { showToast } from "@/lib/toast";
+import { suggestBillMonth } from "@/lib/cardUtils";
 import {
   createTransactionSchema,
   type CreateTransactionInput,
@@ -68,12 +69,31 @@ export function TransactionModal({
 
   const type = watch("type");
   const cardId = watch("cardId");
+  const date = watch("date");
 
   const installmentInfo = isInstallment
     ? `Parcela ${transaction?.installmentNumber || 1} de ${
         transaction?.installmentPurchase?.installments || 1
       }`
     : null;
+
+  // Sugerir mês da fatura quando cartão ou data mudarem
+  useEffect(() => {
+    if (cardId && date) {
+      const selectedCard = cards.find((c) => c.id === cardId);
+      if (selectedCard) {
+        const suggested = suggestBillMonth(
+          date instanceof Date ? date : new Date(date),
+          selectedCard.closingDay,
+          selectedCard.dueDay
+        );
+        setValue("billMonth", suggested);
+      }
+    } else if (!cardId) {
+      // Limpar billMonth se não houver cartão selecionado
+      setValue("billMonth", null);
+    }
+  }, [cardId, date, cards, setValue]);
 
   // Reset form when modal opens/closes or transaction changes
   useEffect(() => {
@@ -92,6 +112,7 @@ export function TransactionModal({
           cardId: transaction.cardId || null,
           paidBy: transaction.paidBy || null,
           isReimbursed: transaction.isReimbursed || false,
+          billMonth: transaction.billMonth || null,
         });
       } else {
         reset({
@@ -103,6 +124,7 @@ export function TransactionModal({
           cardId: null,
           paidBy: null,
           isReimbursed: false,
+          billMonth: null,
         });
       }
     }
@@ -315,6 +337,22 @@ export function TransactionModal({
                 })),
               ]}
             />
+          )}
+
+          {/* Mês da Fatura - só aparece quando tem cartão selecionado */}
+          {type === "EXPENSE" && cardId && (
+            <div className="space-y-2">
+              <FormInput
+                label="Mês da Fatura"
+                type="month"
+                {...register("billMonth")}
+                error={errors.billMonth}
+              />
+              <p className="text-xs text-neutral-500 dark:text-neutral-400">
+                💡 O mês foi sugerido automaticamente baseado na data da compra e no dia de
+                fechamento do cartão. Você pode alterá-lo se necessário.
+              </p>
+            </div>
           )}
 
           {/* Pago Por */}

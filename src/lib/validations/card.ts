@@ -50,15 +50,17 @@ export const updateCardSchema = cardSchema.partial().extend({
 });
 
 /**
- * Validação adicional: dia de vencimento deve ser após o fechamento
+ * Validação adicional de datas do cartão
+ *
+ * NOTA: Removida validação de dueDay > closingDay pois é comum
+ * cartões fecharem no final do mês (ex: dia 31) e vencerem no início
+ * do mês seguinte (ex: dia 7).
+ *
+ * Exemplo válido: fecha 31/10, vence 07/11
  */
 export const validateCardDates = (data: { closingDay: number; dueDay: number }) => {
-  if (data.dueDay <= data.closingDay) {
-    return {
-      success: false,
-      error: "Dia de vencimento deve ser após o dia de fechamento",
-    };
-  }
+  // Não há validação necessária além das já feitas pelo Zod
+  // Os dias já são validados como 1-31 pelo schema
   return { success: true };
 };
 
