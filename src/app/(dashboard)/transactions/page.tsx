@@ -9,8 +9,8 @@ import { Button } from "@/components/ui/Button";
 import { Select } from "@/components/ui/Select";
 import { TransactionTable } from "@/components/transactions/TransactionTable";
 import { TransactionFilters } from "@/components/transactions/TransactionFilters";
-import { TransactionModal } from "@/components/transactions/TransactionModal"; // Modal antigo para criar
-import { TransactionModal as TransactionModalEdit } from "@/components/transactions/TransactionModalNew"; // Modal novo para editar
+import { TransactionModalCreate } from "@/components/transactions/TransactionModalCreate"; // Modal de criar
+import { TransactionModal as TransactionModalEdit } from "@/components/transactions/TransactionModalEdit"; // Modal de editar
 import { Transaction, TransactionFormData } from "@/types";
 import { showToast, toastMessages } from "@/lib/toast";
 import { useConfirm } from "@/hooks/useConfirm";
@@ -447,18 +447,19 @@ function TransactionsContent() {
       </div>
 
       {/* Modais */}
-      {/* Modal para CRIAR (antigo - com parcelamento) */}
+      {/* Modal para CRIAR */}
       {!editingTransaction && (
-        <TransactionModal
+        <TransactionModalCreate
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
-          onSave={handleSaveTransaction}
-          transaction={null}
+          onSave={async () => {
+            await refetch();
+          }}
           categories={categories || []}
         />
       )}
 
-      {/* Modal para EDITAR (novo - com checkbox de parcelas) */}
+      {/* Modal para EDITAR */}
       {editingTransaction && (
         <TransactionModalEdit
           isOpen={isModalOpen}
