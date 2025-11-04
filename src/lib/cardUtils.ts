@@ -12,32 +12,28 @@ export function isWeekend(date: Date): boolean {
 
 /**
  * Sugere o mês da fatura com base na data da compra e dia de fechamento
- * 
+ *
  * NOVA LÓGICA SIMPLIFICADA:
  * - Usuário escolhe o mês da fatura manualmente
  * - Esta função apenas SUGERE o mês mais provável
- * 
+ *
  * Regra simples:
  * - Se comprou ANTES do fechamento → Fatura do mês atual
  * - Se comprou DEPOIS do fechamento → Fatura do próximo mês
- * 
+ *
  * @param purchaseDate - Data da compra
  * @param closingDay - Dia de fechamento do cartão
  * @param dueDay - Dia de vencimento do cartão
  * @returns String no formato YYYY-MM (mês de vencimento sugerido)
- * 
+ *
  * @example
  * // Compra dia 15/10, fecha dia 30, vence dia 7
  * suggestBillMonth(new Date(2025, 9, 15), 30, 7) // "2025-11" (vence em novembro)
- * 
- * // Compra dia 31/10, fecha dia 30, vence dia 7  
+ *
+ * // Compra dia 31/10, fecha dia 30, vence dia 7
  * suggestBillMonth(new Date(2025, 9, 31), 30, 7) // "2025-12" (vence em dezembro)
  */
-export function suggestBillMonth(
-  purchaseDate: Date,
-  closingDay: number,
-  dueDay: number
-): string {
+export function suggestBillMonth(purchaseDate: Date, closingDay: number, dueDay: number): string {
   const purchaseDay = purchaseDate.getDate();
   const purchaseMonth = purchaseDate.getMonth(); // 0-11
   const purchaseYear = purchaseDate.getFullYear();

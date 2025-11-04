@@ -10,7 +10,7 @@ import { FormCheckbox } from "@/components/ui/FormCheckbox";
 import { FormColorPicker } from "@/components/ui/FormColorPicker";
 import { Card } from "@/services/cardService";
 import { showToast, toastMessages } from "@/lib/toast";
-import { createCardSchema, validateCardDates, type CreateCardInput } from "@/lib/validations/card";
+import { createCardSchema, type CreateCardInput } from "@/lib/validations/card";
 
 interface CardModalProps {
   isOpen: boolean;

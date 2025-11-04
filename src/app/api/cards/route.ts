@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { createCardSchema, validateCardDates } from "@/lib/validations/card";
+import { createCardSchema } from "@/lib/validations/card";
 
 // GET /api/cards - Listar todos os cartões do usuário
 export async function GET(request: Request) {
@@ -200,12 +200,6 @@ export async function POST(request: Request) {
     }
 
     const data = validationResult.data;
-
-    // Validação adicional de datas
-    const dateValidation = validateCardDates(data);
-    if (!dateValidation.success) {
-      return NextResponse.json({ error: dateValidation.error }, { status: 400 });
-    }
 
     // Se está marcando como padrão, desmarcar outros cartões
     const isDefault = body.isDefault || false;
